@@ -6,7 +6,7 @@
 const LP_MODULOS = [
   { id: 'inicio',          label: 'Inicio',     href: 'index.html',     icon: 'icons/inicio-liga.png' },
   { id: 'jugadores-liga',  label: 'Jugadores',  href: 'jugadores.html', icon: 'icons/jugadores.png'   },
-  { id: 'ligas',           label: 'T. y Ligas', href: 'index.html',     icon: 'icons/ligas.png'       },
+  { id: 'ligas',           label: 'Ligas', href: 'index.html',     icon: 'icons/ligas.png'       },
   { id: 'torneos-liga',    label: 'Torneos',    href: 'torneos.html',   icon: 'icons/torneos.png'     },
   { id: 'pistas-liga',     label: 'Pistas',     href: 'pistas.html',    icon: 'icons/pistas.png'      },
 ];
