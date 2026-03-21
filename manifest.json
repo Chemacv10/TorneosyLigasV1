@@ -1,0 +1,12 @@
+{
+  "name": "LigaPádel",
+  "short_name": "LigaPádel",
+  "description": "Gestión de ligas y torneos de pádel",
+  "start_url": "/ligapadel/",
+  "display": "standalone",
+  "background_color": "#e8edf5",
+  "theme_color": "#2563eb",
+  "icons": [
+    { "src": "icons/ligas.png", "sizes": "192x192", "type": "image/png" }
+  ]
+}

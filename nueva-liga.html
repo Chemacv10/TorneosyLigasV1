@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Nueva liga — LigaPádel</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Wizard steps */
+    .wizard-steps { display:flex; margin-bottom:20px; }
+    .wstep { flex:1; text-align:center; position:relative; }
+    .wstep-circle { width:28px; height:28px; border-radius:50%; border:2px solid #e2e8f0; background:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; color:#94a3b8; margin:0 auto 4px; transition:all .2s; }
+    .wstep.active .wstep-circle { border-color:var(--azul); background:var(--azul); color:#fff; }
+    .wstep.done   .wstep-circle { border-color:var(--verde); background:var(--verde); color:#fff; }
+    .wstep-label { font-size:9px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.4px; }
+    .wstep.active .wstep-label { color:var(--azul); }
+    .wstep.done   .wstep-label { color:var(--verde); }
+    .wstep::after { content:''; position:absolute; top:13px; left:calc(50% + 18px); right:calc(-50% + 18px); height:2px; background:#e2e8f0; }
+    .wstep:last-child::after { display:none; }
+    .wstep.done::after { background:var(--verde); }
+
+    /* Fases del wizard */
+    .fase { display:none; }
+    .fase.active { display:block; }
+
+    /* Selector de semanas */
+    .semana-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; border:1.5px solid #e2e8f0; margin-bottom:7px; cursor:pointer; transition:all .12s; }
+    .semana-item:hover { border-color:#bfdbfe; }
+    .semana-item.sel-jornada   { border-color:var(--azul); background:#eff6ff; }
+    .semana-item.sel-recuperacion { border-color:var(--verde); background:#f0fdf4; }
+    .semana-item.sel-saltar    { border-color:#e2e8f0; background:#f8fafc; opacity:.55; }
+    .semana-tipo-btns { display:flex; gap:4px; margin-left:auto; }
+    .semana-tipo-btn { padding:4px 8px; border-radius:8px; border:1px solid #e2e8f0; background:#fff; font-size:10px; font-weight:800; cursor:pointer; color:#64748b; transition:all .12s; }
+    .semana-tipo-btn.on-j { border-color:var(--azul); background:var(--azul); color:#fff; }
+    .semana-tipo-btn.on-r { border-color:var(--verde); background:var(--verde); color:#fff; }
+    .semana-tipo-btn.on-s { border-color:#94a3b8; background:#f1f5f9; color:#64748b; }
+
+    .contador-semanas { display:flex; gap:10px; margin-bottom:14px; }
+    .cnt-item { flex:1; background:#f8fafc; border-radius:10px; padding:8px; text-align:center; border:1px solid #f1f5f9; }
+    .cnt-v { font-size:18px; font-weight:900; }
+    .cnt-l { font-size:9px; font-weight:800; color:var(--sutil); }
+    .cnt-v.azul { color:var(--azul); }
+    .cnt-v.verde { color:var(--verde); }
+    .cnt-v.rojo  { color:var(--rojo); }
+
+    /* División config */
+    .div-config { border:1.5px solid #e2e8f0; border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+    .div-config-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .div-config-nombre { font-size:13px; font-weight:800; color:var(--texto); }
+
+    /* Material chips */
+    .material-chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+    .material-chip { display:flex; align-items:center; gap:5px; padding:5px 10px; border-radius:100px; border:1.5px solid #e2e8f0; font-size:11px; font-weight:800; cursor:pointer; color:#64748b; background:#fff; }
+    .material-chip.on { border-color:var(--azul); background:#eff6ff; color:var(--azul); }
+    .material-chip-x { font-size:14px; font-weight:900; color:var(--rojo); margin-left:2px; }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div id="header-container"></div>
+  <nav id="nav-container"></nav>
+
+  <main class="content">
+
+    <!-- Wizard steps -->
+    <div class="wizard-steps" id="wizard-steps">
+      <div class="wstep active" id="ws-1"><div class="wstep-circle">1</div><div class="wstep-label">Datos</div></div>
+      <div class="wstep"        id="ws-2"><div class="wstep-circle">2</div><div class="wstep-label">Divisiones</div></div>
+      <div class="wstep"        id="ws-3"><div class="wstep-circle">3</div><div class="wstep-label">Semanas</div></div>
+      <div class="wstep"        id="ws-4"><div class="wstep-circle">4</div><div class="wstep-label">Normativa</div></div>
+    </div>
+
+    <!-- ─── FASE 1: Datos generales ─── -->
+    <div class="fase active" id="fase-1">
+      <div class="fgrp">
+        <div class="flbl">Nombre de la liga *</div>
+        <input class="finp" id="f1-nombre" placeholder="Ej: Liga Masculina 2025/26">
+      </div>
+      <div class="frow">
+        <div class="fgrp">
+          <div class="flbl">Categoría</div>
+          <select class="fsel" id="f1-categoria">
+            <option>Masculina</option>
+            <option>Femenina</option>
+            <option>Mixta</option>
+            <option>Benjamín</option>
+            <option>Alevín</option>
+            <option>Infantil</option>
+            <option>Cadete</option>
+            <option>Júnior</option>
+          </select>
+        </div>
+        <div class="fgrp">
+          <div class="flbl">Temporada</div>
+          <input class="finp" id="f1-temporada" placeholder="Ej: 2025/26">
+        </div>
+      </div>
+      <div class="frow">
+        <div class="fgrp">
+          <div class="flbl">Formato</div>
+          <select class="fsel" id="f1-formato" onchange="onCambioFormato()">
+            <option value="round_robin">Round-Robin (parejas fijas)</option>
+            <option value="americano">Americano (parejas rotan)</option>
+          </select>
+        </div>
+        <div class="fgrp">
+          <div class="flbl">Sets por partido</div>
+          <select class="fsel" id="f1-sets">
+            <option value="mejor_3_stb">Mejor de 3 + STB</option>
+            <option value="mejor_3">Mejor de 3</option>
+            <option value="pro_set_10">Pro-set 10 games</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Puntuación (solo round-robin) -->
+      <div id="wrap-puntuacion">
+        <div style="font-size:10px;font-weight:900;color:var(--sutil);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 8px">Sistema de puntuación</div>
+        <div class="frow">
+          <div class="fgrp"><div class="flbl">Victoria</div><input class="finp" id="f1-pts-v" type="number" value="2"></div>
+          <div class="fgrp"><div class="flbl">Derrota</div><input class="finp" id="f1-pts-d" type="number" value="1"></div>
+          <div class="fgrp"><div class="flbl">WO/Incomp.</div><input class="finp" id="f1-pts-wo" type="number" value="0"></div>
+        </div>
+        <div class="frow">
+          <div class="fgrp"><div class="flbl">Pts presente en WO</div><input class="finp" id="f1-pts-pres" type="number" value="2"></div>
+          <div class="fgrp"><div class="flbl">Aplazamientos máx.</div><input class="finp" id="f1-aplaz" type="number" value="5"></div>
+        </div>
+      </div>
+
+      <div class="frow">
+        <div class="fgrp">
+          <div class="flbl">Cuota inscripción (€)</div>
+          <input class="finp" id="f1-cuota" type="number" placeholder="0" step="0.50">
+        </div>
+        <div class="fgrp">
+          <div class="flbl">URL pública</div>
+          <input class="finp" id="f1-url" placeholder="liga-masc-2526" oninput="sanitizarUrl(this)">
+        </div>
+      </div>
+
+      <div style="font-size:10px;font-weight:900;color:var(--sutil);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 8px">Material a entregar</div>
+      <div class="material-chips" id="material-chips">
+        <div class="material-chip" onclick="togMaterial(this,'Bote de bolas')">🎾 Bote de bolas</div>
+        <div class="material-chip" onclick="togMaterial(this,'Camiseta')">👕 Camiseta</div>
+        <div class="material-chip" onclick="togMaterial(this,'Trofeo')">🏆 Trofeo</div>
+        <div class="material-chip" onclick="togMaterial(this,'Bolsa deportiva')">🎒 Bolsa</div>
+      </div>
+      <div class="nuevo-inline" id="nuevo-material-wrap">
+        <input class="finp" id="nuevo-material-inp" placeholder="Otro material…" onkeydown="if(event.key==='Enter'){event.preventDefault();addMaterial();}">
+        <button class="sbtn prim" type="button" onclick="addMaterial()">+</button>
+      </div>
+
+      <div class="sheet-btns" style="margin-top:16px">
+        <button class="sbtn" onclick="window.location.href='index.html'">Cancelar</button>
+        <button class="sbtn prim" onclick="irFase(2)">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- ─── FASE 2: Divisiones ─── -->
+    <div class="fase" id="fase-2">
+      <div style="font-size:12px;font-weight:600;color:var(--sutil);margin-bottom:14px;line-height:1.5">
+        Define las divisiones. Puedes tener solo una (liga única) o varias con reglas de ascenso/descenso.
+      </div>
+      <div id="divisiones-lista"></div>
+      <button class="btn" style="width:100%;margin-bottom:7px" onclick="addDivision()">+ Añadir división</button>
+      <div class="sheet-btns" style="margin-top:8px">
+        <button class="sbtn" onclick="irFase(1)">← Atrás</button>
+        <button class="sbtn prim" onclick="irFase(3)">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- ─── FASE 3: Selector de semanas ─── -->
+    <div class="fase" id="fase-3">
+      <div style="font-size:12px;font-weight:600;color:var(--sutil);margin-bottom:14px;line-height:1.5">
+        Selecciona las semanas del período. Marca cada una como <strong>Jornada</strong>, <strong>Recuperación</strong> o déjala <strong>libre</strong> (festivos, Navidad...).
+      </div>
+
+      <div class="frow" style="margin-bottom:14px">
+        <div class="fgrp">
+          <div class="flbl">Período — Inicio</div>
+          <input class="finp" id="f3-ini" type="date" onchange="generarSemanas()">
+        </div>
+        <div class="fgrp">
+          <div class="flbl">Período — Fin</div>
+          <input class="finp" id="f3-fin" type="date" onchange="generarSemanas()">
+        </div>
+      </div>
+
+      <div class="contador-semanas" id="contador-semanas" style="display:none">
+        <div class="cnt-item"><div class="cnt-v azul" id="cnt-jornadas">0</div><div class="cnt-l">Jornadas</div></div>
+        <div class="cnt-item"><div class="cnt-v verde" id="cnt-recuperacion">0</div><div class="cnt-l">Recuperación</div></div>
+        <div class="cnt-item"><div class="cnt-v" id="cnt-necesarias" style="color:var(--sutil)">—</div><div class="cnt-l">Necesarias</div></div>
+      </div>
+
+      <div id="semanas-lista"></div>
+
+      <div class="sheet-btns" style="margin-top:8px">
+        <button class="sbtn" onclick="irFase(2)">← Atrás</button>
+        <button class="sbtn prim" onclick="irFase(4)">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- ─── FASE 4: Normativa ─── -->
+    <div class="fase" id="fase-4">
+      <div class="fgrp">
+        <div class="flbl">Título del reglamento</div>
+        <input class="finp" id="f4-titulo" placeholder="Ej: Liga Pádel Club Sevilla 2025-26">
+      </div>
+      <div class="fgrp">
+        <div class="flbl">Horario de juego</div>
+        <input class="finp" id="f4-horario" placeholder="Ej: Vie 17-22h · Sáb 10-21h · Dom 10-21h">
+      </div>
+      <div class="frow">
+        <div class="fgrp">
+          <div class="flbl">Aplazam. máx. por jugador</div>
+          <input class="finp" id="f4-aplaz" type="number" value="5">
+        </div>
+        <div class="fgrp">
+          <div class="flbl">WO tras (min retraso)</div>
+          <input class="finp" id="f4-wo-min" type="number" value="15">
+        </div>
+      </div>
+      <div class="fgrp">
+        <div class="flbl">Texto de normativa</div>
+        <textarea class="finp" id="f4-texto" rows="5" style="resize:none;line-height:1.5"
+          placeholder="Todo participante acepta y respeta la presente Normativa. En caso de duda prevalecerá el criterio de la Organización…"></textarea>
+      </div>
+
+      <div style="font-size:10px;font-weight:900;color:var(--sutil);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 8px">Premios — 1ª División</div>
+      <div class="frow">
+        <div class="fgrp"><div class="flbl">1º clasificado</div><input class="finp" id="f4-p1" placeholder="Trofeo + 150€"></div>
+        <div class="fgrp"><div class="flbl">2º clasificado</div><input class="finp" id="f4-p2" placeholder="Trofeo + 100€"></div>
+        <div class="fgrp"><div class="flbl">3º clasificado</div><input class="finp" id="f4-p3" placeholder="Trofeo + 80€"></div>
+      </div>
+
+      <div class="sheet-btns" style="margin-top:16px">
+        <button class="sbtn" onclick="irFase(3)">← Atrás</button>
+        <button class="sbtn prim" id="btn-crear" onclick="crearLiga()">✓ Crear liga</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/store-liga.js"></script>
+<script src="js/ui.js"></script>
+<script>
+
+let _faseActual = 1;
+let _divisiones = []; // array de { nombre, orden, ascienden_directo, ascienden_playoff, descienden, tiene_playoff, playoff_clasificados }
+let _semanas    = []; // array de { ini, fin, label, tipo: 'jornada'|'recuperacion'|'libre' }
+let _material   = []; // array de strings
+
+// ── Navegación wizard ─────────────────────────────────────────
+function irFase(n) {
+  if (n > _faseActual) {
+    if (!validarFase(_faseActual)) return;
+  }
+  document.querySelector('.fase.active')?.classList.remove('active');
+  document.getElementById('fase-' + n).classList.add('active');
+
+  // Steps
+  for (let i = 1; i <= 4; i++) {
+    const ws = document.getElementById('ws-' + i);
+    ws.className = 'wstep' + (i < n ? ' done' : i === n ? ' active' : '');
+  }
+  _faseActual = n;
+  window.scrollTo(0, 0);
+
+  if (n === 2) renderDivisiones();
+  if (n === 3) sincronizarAplazFase4();
+}
+
+function validarFase(n) {
+  if (n === 1) {
+    if (!document.getElementById('f1-nombre').value.trim()) {
+      toast('Escribe el nombre de la liga', 'warn'); return false;
+    }
+  }
+  if (n === 2) {
+    if (!_divisiones.length) {
+      toast('Añade al menos una división', 'warn'); return false;
+    }
+  }
+  if (n === 3) {
+    const jornadas = _semanas.filter(s => s.tipo === 'jornada').length;
+    if (!jornadas) {
+      toast('Selecciona al menos una jornada', 'warn'); return false;
+    }
+  }
+  return true;
+}
+
+// ── Fase 1: formato ───────────────────────────────────────────
+function onCambioFormato() {
+  const fmt = document.getElementById('f1-formato').value;
+  document.getElementById('wrap-puntuacion').style.display = fmt === 'americano' ? 'none' : 'block';
+}
+
+function sanitizarUrl(inp) {
+  inp.value = inp.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+}
+
+// ── Material ──────────────────────────────────────────────────
+function togMaterial(el, nombre) {
+  el.classList.toggle('on');
+  if (el.classList.contains('on')) {
+    if (!_material.includes(nombre)) _material.push(nombre);
+  } else {
+    _material = _material.filter(m => m !== nombre);
+  }
+}
+
+function addMaterial() {
+  const inp = document.getElementById('nuevo-material-inp');
+  const val = inp.value.trim();
+  if (!val) { inp.focus(); return; }
+  if (!_material.includes(val)) {
+    _material.push(val);
+    const chip = document.createElement('div');
+    chip.className = 'material-chip on';
+    chip.textContent = val;
+    chip.dataset.nombre = val;
+    chip.onclick = () => togMaterial(chip, val);
+    document.getElementById('material-chips').appendChild(chip);
+  }
+  inp.value = '';
+  inp.focus();
+}
+
+// ── Fase 2: divisiones ────────────────────────────────────────
+function renderDivisiones() {
+  if (!_divisiones.length) {
+    // Inicializar con una división por defecto
+    _divisiones = [{ nombre:'1ª División', orden:1, ascienden_directo:0, ascienden_playoff:0, descienden:0, tiene_playoff:false, playoff_clasificados:8 }];
+  }
+  const el = document.getElementById('divisiones-lista');
+  el.innerHTML = _divisiones.map((d, i) => `
+    <div class="div-config">
+      <div class="div-config-header">
+        <input class="finp" value="${d.nombre}" style="font-size:13px;font-weight:800;flex:1;margin-right:8px"
+          onchange="_divisiones[${i}].nombre=this.value">
+        ${_divisiones.length > 1 ? `<button onclick="elimDivision(${i})" style="background:none;border:none;color:var(--rojo);font-size:18px;cursor:pointer;padding:0">×</button>` : ''}
+      </div>
+      <div class="frow">
+        <div class="fgrp">
+          <div class="flbl">Ascienden directo</div>
+          <input class="finp" type="number" value="${d.ascienden_directo}" min="0"
+            onchange="_divisiones[${i}].ascienden_directo=+this.value">
+        </div>
+        <div class="fgrp">
+          <div class="flbl">Ascienden play-off</div>
+          <input class="finp" type="number" value="${d.ascienden_playoff}" min="0"
+            onchange="_divisiones[${i}].ascienden_playoff=+this.value">
+        </div>
+        <div class="fgrp">
+          <div class="flbl">Descienden</div>
+          <input class="finp" type="number" value="${d.descienden}" min="0"
+            onchange="_divisiones[${i}].descienden=+this.value">
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+        <input type="checkbox" id="playoff-${i}" ${d.tiene_playoff?'checked':''} onchange="_divisiones[${i}].tiene_playoff=this.checked;renderDivisiones()" style="accent-color:var(--azul)">
+        <label for="playoff-${i}" style="font-size:12px;font-weight:700;color:var(--texto);cursor:pointer">Fase final / play-off</label>
+        ${d.tiene_playoff ? `
+        <input class="finp" type="number" value="${d.playoff_clasificados}" min="2" max="16" style="max-width:60px;margin-left:8px"
+          onchange="_divisiones[${i}].playoff_clasificados=+this.value">
+        <span style="font-size:11px;font-weight:600;color:var(--sutil)">clasificados</span>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+function addDivision() {
+  const n = _divisiones.length + 1;
+  _divisiones.push({ nombre:`${n}ª División`, orden:n, ascienden_directo:0, ascienden_playoff:0, descienden:0, tiene_playoff:false, playoff_clasificados:8 });
+  renderDivisiones();
+}
+
+function elimDivision(i) {
+  _divisiones.splice(i, 1);
+  _divisiones.forEach((d, idx) => d.orden = idx + 1);
+  renderDivisiones();
+}
+
+// ── Fase 3: selector de semanas ───────────────────────────────
+function generarSemanas() {
+  const iniStr = document.getElementById('f3-ini').value;
+  const finStr = document.getElementById('f3-fin').value;
+  if (!iniStr || !finStr) return;
+
+  const semanas = lpGetSemanas(iniStr, finStr);
+  _semanas = semanas.map(s => ({ ...s, tipo: 'jornada' }));
+  renderSemanas();
+}
+
+function renderSemanas() {
+  const el = document.getElementById('semanas-lista');
+  if (!_semanas.length) { el.innerHTML = ''; document.getElementById('contador-semanas').style.display = 'none'; return; }
+
+  document.getElementById('contador-semanas').style.display = 'flex';
+  actualizarContador();
+
+  el.innerHTML = _semanas.map((s, i) => {
+    const clsItem = s.tipo === 'jornada' ? 'sel-jornada' : s.tipo === 'recuperacion' ? 'sel-recuperacion' : '';
+    const numLabel = s.tipo === 'jornada'
+      ? `<span style="font-size:11px;font-weight:900;color:var(--azul)">J${_semanas.slice(0,i+1).filter(x=>x.tipo==='jornada').length}</span>`
+      : s.tipo === 'recuperacion'
+        ? `<span style="font-size:11px;font-weight:900;color:var(--verde)">Rec.</span>`
+        : `<span style="font-size:11px;font-weight:700;color:#94a3b8">—</span>`;
+    return `
+    <div class="semana-item ${clsItem}" id="semana-${i}">
+      <div style="min-width:32px;text-align:center">${numLabel}</div>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:800;color:var(--texto)">${s.label}</div>
+      </div>
+      <div class="semana-tipo-btns">
+        <button class="semana-tipo-btn ${s.tipo==='jornada'?'on-j':''}" onclick="setSemana(${i},'jornada')">Jornada</button>
+        <button class="semana-tipo-btn ${s.tipo==='recuperacion'?'on-r':''}" onclick="setSemana(${i},'recuperacion')">Recup.</button>
+        <button class="semana-tipo-btn ${s.tipo==='libre'?'on-s':''}" onclick="setSemana(${i},'libre')">Libre</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setSemana(i, tipo) {
+  _semanas[i].tipo = tipo;
+  renderSemanas();
+}
+
+function actualizarContador() {
+  const nJ = _semanas.filter(s => s.tipo === 'jornada').length;
+  const nR = _semanas.filter(s => s.tipo === 'recuperacion').length;
+  document.getElementById('cnt-jornadas').textContent    = nJ;
+  document.getElementById('cnt-recuperacion').textContent = nR;
+  // Necesarias = jornadas round-robin para N parejas (se calculará al generar)
+  document.getElementById('cnt-necesarias').textContent  = '—';
+}
+
+function sincronizarAplazFase4() {
+  const aplaz = document.getElementById('f1-aplaz').value;
+  document.getElementById('f4-aplaz').value = aplaz;
+}
+
+// ── Crear liga ─────────────────────────────────────────────────
+async function crearLiga() {
+  const btn = document.getElementById('btn-crear');
+  btn.disabled = true;
+  btn.textContent = 'Creando…';
+
+  try {
+    // 1. Crear la liga
+    const liga = await lpSaveLiga({
+      nombre:     document.getElementById('f1-nombre').value.trim(),
+      categoria:  document.getElementById('f1-categoria').value,
+      temporada:  document.getElementById('f1-temporada').value.trim() || null,
+      formato:    document.getElementById('f1-formato').value,
+      sets_partido: document.getElementById('f1-sets').value,
+      pts_victoria:    parseInt(document.getElementById('f1-pts-v').value)    || 2,
+      pts_derrota:     parseInt(document.getElementById('f1-pts-d').value)    || 1,
+      pts_wo:          parseInt(document.getElementById('f1-pts-wo').value)   || 0,
+      pts_incomp_presente: parseInt(document.getElementById('f1-pts-pres').value) || 2,
+      aplazamientos_max: parseInt(document.getElementById('f1-aplaz').value) || 5,
+      cuota:        parseFloat(document.getElementById('f1-cuota').value)    || 0,
+      url_publica:  document.getElementById('f1-url').value.trim() || null,
+      material_entrega: _material,
+      estado:       'inscripcion',
+    });
+
+    // 2. Crear divisiones
+    await Promise.all(_divisiones.map((d, i) =>
+      lpSaveDivision({
+        liga_id: liga.id,
+        nombre:  d.nombre,
+        orden:   i + 1,
+        ascienden_directo:   d.ascienden_directo,
+        ascienden_playoff:   d.ascienden_playoff,
+        descienden:          d.descienden,
+        tiene_playoff:       d.tiene_playoff,
+        playoff_clasificados: d.playoff_clasificados,
+      })
+    ));
+
+    // 3. Crear jornadas
+    const jornadasData = [];
+    let numJornada = 1, numRecuperacion = 1;
+    for (const s of _semanas) {
+      if (s.tipo === 'libre') continue;
+      jornadasData.push({
+        liga_id:    liga.id,
+        numero:     s.tipo === 'jornada' ? numJornada++ : numRecuperacion++,
+        tipo:       s.tipo,
+        fecha_ini:  lpDateToISO(s.ini),
+        fecha_fin:  lpDateToISO(s.fin),
+        estado:     'pendiente',
+        notas:      null,
+      });
+    }
+    if (jornadasData.length) await lpSaveJornadasLote(jornadasData);
+
+    // 4. Crear normativa
+    const normTitulo = document.getElementById('f4-titulo').value.trim();
+    if (normTitulo || document.getElementById('f4-texto').value.trim()) {
+      await lpSaveNormativa({
+        liga_id:      liga.id,
+        titulo:       normTitulo || liga.nombre,
+        horario_juego: document.getElementById('f4-horario').value.trim() || null,
+        texto_libre:  document.getElementById('f4-texto').value.trim() || null,
+        premios: {
+          '1ª División': {
+            '1º': document.getElementById('f4-p1').value.trim(),
+            '2º': document.getElementById('f4-p2').value.trim(),
+            '3º': document.getElementById('f4-p3').value.trim(),
+          }
+        },
+      });
+    }
+
+    toast('✓ Liga creada', 'ok');
+    setTimeout(() => {
+      window.location.href = `liga.html?id=${liga.id}&tab=participantes`;
+    }, 800);
+
+  } catch(e) {
+    console.error(e);
+    toast('Error al crear: ' + (e.message || JSON.stringify(e)), 'err');
+    btn.disabled = false;
+    btn.textContent = '✓ Crear liga';
+  }
+}
+
+// ── Init ───────────────────────────────────────────────────────
+async function init() {
+  renderHeader({ titulo:'LigaPádel', subtitulo:'Nueva liga', icono:'icons/ligas.png', botonDerecho:null });
+  renderNav('ligas');
+  await lpInit();
+
+  // Fecha sugerida: hoy + 1 semana a hoy + 7 meses
+  const hoy = new Date();
+  const ini = new Date(hoy); ini.setDate(ini.getDate() + 7);
+  const fin = new Date(hoy); fin.setMonth(fin.getMonth() + 7);
+  document.getElementById('f3-ini').value = lpDateToISO(ini);
+  document.getElementById('f3-fin').value = lpDateToISO(fin);
+  generarSemanas();
+}
+
+init();
+</script>
+</body>
+</html>
