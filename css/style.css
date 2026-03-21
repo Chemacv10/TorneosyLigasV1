@@ -130,13 +130,13 @@ nav, .nav {
 .nav-item.active { background: #eff6ff; border-color: var(--azul); box-shadow: 0 2px 10px rgba(37,99,235,.14); }
 
 .nav-icon {
-  width: 30px; height: 30px;
+  width: 42px; height: 42px;
   display: flex; align-items: center; justify-content: center;
   background: none;
   border-radius: 0;
 }
 .nav-item.active .nav-icon { background: none; }
-.nav-icon img { width: 28px; height: 28px; object-fit: contain; }
+.nav-icon img { width: 42px; height: 42px; object-fit: contain; }
 .nav-item.active .nav-icon img { mix-blend-mode: multiply; }
 
 .nav-label {
