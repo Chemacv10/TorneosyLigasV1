@@ -134,8 +134,9 @@ async function lpGetLiga(id) {
     .select('*')
     .eq('id', id)
     .eq('organizador_id', LP.orgId)
-    .single();
+    .maybeSingle();
   if (error) throw error;
+  if (!data) throw new Error(`Liga no encontrada o no tienes acceso (id: ${id})`);
   return data;
 }
 
