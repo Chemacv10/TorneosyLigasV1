@@ -627,6 +627,10 @@ nav, .nav {
 
 /* ── Selector custom con ✕ integrado (csel) ──── */
 .csel-wrap   { border: 2px solid #bfdbfe; border-radius: 12px; background: #eff6ff; overflow: hidden; }
+.csel-trigger { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; cursor: pointer; user-select: none; }
+.csel-trigger-label { font-size: 14px; font-weight: 700; color: var(--texto); flex: 1; }
+.csel-trigger-arrow { font-size: 11px; color: #93c5fd; transition: transform .2s; flex-shrink: 0; }
+.csel-dropdown { border-top: 1.5px solid #bfdbfe; }
 .csel-lista  { display: flex; flex-direction: column; }
 .csel-item   { display: flex; align-items: center; padding: 10px 12px; border-bottom: 1px solid #dbeafe; cursor: pointer; transition: background .12s; gap: 10px; }
 .csel-item:last-child { border-bottom: none; }
