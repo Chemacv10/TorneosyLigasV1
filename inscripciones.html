@@ -85,7 +85,8 @@
 <div class="overlay" id="sh-pareja">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">Añadir pareja</div>
+    <div class="sheet-title" id="sh-pareja-titulo">Añadir pareja</div>
+    <input type="hidden" id="par-id">
     <input type="hidden" id="par-jug1-id">
     <input type="hidden" id="par-jug2-id">
 
@@ -211,7 +212,10 @@ function renderLista() {
             <button class="ctog ${c2ok ? 'cok' : 'cpend'}" onclick="toggleCuota('${p.id}',2)">${c2ok ? '✓ Pagada' : 'Pendiente'}</button>
           </div>
         </div>
-        <button class="par-del" onclick="eliminarPareja('${p.id}')">✕</button>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <button class="par-del" onclick="abrirSheet('${p.id}')" style="font-size:13px">✏️</button>
+          <button class="par-del" onclick="eliminarPareja('${p.id}')">✕</button>
+        </div>
       </div>`;
     });
   });
@@ -240,15 +244,61 @@ async function eliminarPareja(id) {
 }
 
 // ── Sheet ─────────────────────────────────────────────────────
-function abrirSheet() {
+function abrirSheet(parejaId) {
+  const p = parejaId ? _parejas.find(x => x.id === parejaId) : null;
+
+  document.getElementById('par-id').value    = p?.id || '';
   document.getElementById('par-jug1-id').value = '';
   document.getElementById('par-jug2-id').value = '';
+  document.getElementById('sh-pareja-titulo').textContent = p ? 'Editar pareja' : 'Añadir pareja';
+
   resetBuscador(1); resetBuscador(2);
-  document.getElementById('par-cuota1').value = '';
-  document.getElementById('par-cuota2').value = '';
+
+  // Si es edición, pre-rellenar jugadores seleccionados
+  if (p) {
+    if (p.jugador1_id) {
+      const jug1 = _jugadores.find(j => j.id === p.jugador1_id);
+      if (jug1) {
+        const nombre = [jug1.nombre, jug1.apellidos].filter(Boolean).join(' ');
+        seleccionarJugador(1, jug1.id, nombre, jug1.nivel || '', colorAvatar(nombre), nombre[0]?.toUpperCase() || '?');
+      } else {
+        // Jugador no está en la lista local, mostrar nombre guardado
+        const nombre = p.nombre1 || '';
+        document.getElementById('par-jug1-id').value = p.jugador1_id;
+        const wrap = document.getElementById('jug1-wrap');
+        wrap.innerHTML = `<div class="flbl">Jugador seleccionado</div>
+          <div class="jug-sel">
+            <div style="width:28px;height:28px;border-radius:50%;background:${colorAvatar(nombre)};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;flex-shrink:0">${nombre[0]?.toUpperCase()||'?'}</div>
+            <div class="jug-sel-nombre">${nombre}</div>
+            <button style="background:none;border:none;color:var(--sutil);font-size:16px;cursor:pointer" onclick="document.getElementById('par-jug1-id').value='';resetBuscador(1)">✕</button>
+          </div>`;
+      }
+    }
+    if (p.jugador2_id) {
+      const jug2 = _jugadores.find(j => j.id === p.jugador2_id);
+      if (jug2) {
+        const nombre = [jug2.nombre, jug2.apellidos].filter(Boolean).join(' ');
+        seleccionarJugador(2, jug2.id, nombre, jug2.nivel || '', colorAvatar(nombre), nombre[0]?.toUpperCase() || '?');
+      } else {
+        const nombre = p.nombre2 || '';
+        document.getElementById('par-jug2-id').value = p.jugador2_id;
+        const wrap = document.getElementById('jug2-wrap');
+        wrap.innerHTML = `<div class="flbl">Jugador seleccionado</div>
+          <div class="jug-sel">
+            <div style="width:28px;height:28px;border-radius:50%;background:${colorAvatar(nombre)};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;flex-shrink:0">${nombre[0]?.toUpperCase()||'?'}</div>
+            <div class="jug-sel-nombre">${nombre}</div>
+            <button style="background:none;border:none;color:var(--sutil);font-size:16px;cursor:pointer" onclick="document.getElementById('par-jug2-id').value='';resetBuscador(2)">✕</button>
+          </div>`;
+      }
+    }
+  }
+
+  document.getElementById('par-cuota1').value = p?.cuota1 || '';
+  document.getElementById('par-cuota2').value = p?.cuota2 || '';
 
   const selDiv = document.getElementById('par-division');
   selDiv.innerHTML = _divisiones.map(d => `<option value="${d.id}">${d.nombre}</option>`).join('');
+  if (p?.division_id) selDiv.value = p.division_id;
   document.getElementById('fgrp-division').style.display = _divisiones.length > 1 ? 'block' : 'none';
 
   openSheet('sh-pareja');
@@ -267,10 +317,14 @@ function buscarJugador(n) {
   const res = document.getElementById(`par-res${n}`);
   if (!q) { res.style.display = 'none'; return; }
 
+  const parejaEditandoId = document.getElementById('par-id').value;
+
   const yaElegidos = [
     document.getElementById('par-jug1-id').value,
     document.getElementById('par-jug2-id').value,
-    ..._parejas.flatMap(p => [p.jugador1_id, p.jugador2_id])
+    ..._parejas
+      .filter(p => p.id !== parejaEditandoId) // excluir la pareja que estamos editando
+      .flatMap(p => [p.jugador1_id, p.jugador2_id])
   ].filter(Boolean);
 
   const filtrados = _jugadores.filter(j => {
@@ -319,17 +373,23 @@ async function guardarPareja() {
   if (!jug1id) { toast('Selecciona el jugador 1', 'warn'); return; }
   if (!jug2id) { toast('Selecciona el jugador 2', 'warn'); return; }
 
-  const divId = document.getElementById('par-division').value || _divisiones[0]?.id;
-  const jug1  = _jugadores.find(j => j.id === jug1id);
-  const jug2  = _jugadores.find(j => j.id === jug2id);
-  const cuota1 = document.getElementById('par-cuota1').value || 'pendiente';
-  const cuota2 = document.getElementById('par-cuota2').value || 'pendiente';
+  const parejaId = document.getElementById('par-id').value;
+  const divId    = document.getElementById('par-division').value || _divisiones[0]?.id;
+  const jug1     = _jugadores.find(j => j.id === jug1id);
+  const jug2     = _jugadores.find(j => j.id === jug2id);
+  const cuota1   = document.getElementById('par-cuota1').value || 'pendiente';
+  const cuota2   = document.getElementById('par-cuota2').value || 'pendiente';
+
+  // Si el jugador no está en la lista local (vino de edición), conservar nombre guardado
+  const pExistente = parejaId ? _parejas.find(p => p.id === parejaId) : null;
+  const nombre1 = jug1 ? [jug1.nombre, jug1.apellidos].filter(Boolean).join(' ') : pExistente?.nombre1 || '';
+  const nombre2 = jug2 ? [jug2.nombre, jug2.apellidos].filter(Boolean).join(' ') : pExistente?.nombre2 || '';
 
   const pareja = {
+    ...(parejaId ? { id: parejaId } : {}),
     liga_id:     _ligaId,
     division_id: divId,
-    nombre1:     [jug1?.nombre, jug1?.apellidos].filter(Boolean).join(' '),
-    nombre2:     [jug2?.nombre, jug2?.apellidos].filter(Boolean).join(' '),
+    nombre1, nombre2,
     jugador1_id: jug1id,
     jugador2_id: jug2id,
     cuota1, cuota2,
@@ -339,7 +399,7 @@ async function guardarPareja() {
   try {
     await lpSavePareja(pareja);
     closeSheet('sh-pareja');
-    toast('Pareja añadida ✓', 'ok');
+    toast(parejaId ? 'Pareja actualizada ✓' : 'Pareja añadida ✓', 'ok');
     _parejas = await lpGetParejas(_ligaId);
     renderLista();
   } catch(e) {

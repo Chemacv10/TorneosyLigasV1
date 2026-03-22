@@ -52,7 +52,7 @@
   <div id="header-container"></div>
   <nav id="nav-container"></nav>
   <main class="content">
-    <div class="kpi-row" id="kpi-row"></div>
+    <div id="ligas-titulo" style="font-size:18px;font-weight:900;color:var(--texto);margin:4px 0 10px;padding-left:2px">Ligas</div>
     <div id="alertas-wrap"></div>
     <div class="search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -72,12 +72,9 @@
 let _ligas = [];
 
 function renderKPIs() {
-  const activas   = _ligas.filter(l => ['inscripcion','activa','fase_final'].includes(l.estado));
-  const jugadores = _ligas.reduce((s,l) => s + (l.lp_parejas?.[0]?.count||0)*2, 0);
-  document.getElementById('kpi-row').innerHTML =
-    `<div class="kpi azul"><div class="val">${activas.length}</div><div class="lbl">Ligas activas</div></div>
-     <div class="kpi verde"><div class="val">${_ligas.length}</div><div class="lbl">Total ligas</div></div>
-     <div class="kpi azul"><div class="val">${jugadores}</div><div class="lbl">Jugadores aprox.</div></div>`;
+  const total = _ligas.length;
+  const el = document.getElementById('ligas-titulo');
+  if (el) el.textContent = total === 0 ? 'Mis ligas' : total === 1 ? '1 liga' : `${total} ligas`;
 }
 
 async function renderAlertas() {
@@ -173,7 +170,7 @@ async function eliminarLiga(id, nombre) {
 
 async function init() {
   renderHeader({ titulo:'LigaPadel', subtitulo:'Gestion de ligas', icono:'icons/inicio-liga.png', botonDerecho:null });
-  renderNav('ligas');
+  renderNav('inicio');
   const ok = await lpInit(); if (!ok) return;
   await lpGetOrganizador();
   showLoading('ligas-wrap');
