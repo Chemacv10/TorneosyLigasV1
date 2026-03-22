@@ -6,69 +6,61 @@
   <title>LigaPádel — Inicio</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .lp-logo { display:flex; align-items:center; gap:8px; }
-    .lp-logo-txt { font-size:18px; font-weight:900; color:var(--texto); }
-    .lp-logo-txt span { color:var(--azul); }
-
-    .liga-estado { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:100px; font-size:10px; font-weight:800; }
-    .le-borrador   { background:#f1f5f9; color:#64748b; }
-    .le-inscripcion{ background:#dbeafe; color:#1e40af; }
-    .le-activa     { background:#dcfce7; color:#15803d; }
-    .le-fase_final { background:#fef9c3; color:#92400e; }
-    .le-finalizada { background:#f1f5f9; color:#64748b; }
-
-    .alerta-card { border-radius:12px; padding:10px 13px; margin-bottom:7px; cursor:pointer; border-left:3px solid; }
-    .alerta-r { border-color:var(--rojo); background:#fff5f5; }
-    .alerta-a { border-color:var(--naranja); background:#fffbeb; }
-    .alerta-b { border-color:var(--azul); background:#eff6ff; }
-    .alerta-titulo { font-size:12px; font-weight:800; }
-    .alerta-sub    { font-size:10px; font-weight:600; color:var(--sutil); margin-top:2px; }
-
+    .chip { display:inline-flex; align-items:center; padding:2px 9px; border-radius:100px; font-size:10px; font-weight:800; }
+    .c-borrador    { background:#f1f5f9; color:#64748b; }
+    .c-inscripcion { background:#dbeafe; color:#1e40af; }
+    .c-activa      { background:#dcfce7; color:#15803d; }
+    .c-fase_final  { background:#fef9c3; color:#92400e; }
+    .c-finalizada  { background:#f1f5f9; color:#64748b; }
     .cat-chip { display:inline-flex; padding:2px 8px; border-radius:100px; font-size:10px; font-weight:800; }
     .cat-m { background:#eff6ff; color:#1e40af; }
     .cat-f { background:#f3e8ff; color:#6d28d9; }
     .cat-x { background:#f0fdf4; color:#15803d; }
     .cat-b { background:#fef9c3; color:#92400e; }
-
-    .fmt-chip { display:inline-flex; padding:2px 8px; border-radius:100px; font-size:10px; font-weight:700; background:#f1f5f9; color:#64748b; }
+    .liga-card { background:var(--card); border-radius:16px; border:1.5px solid var(--borde); overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.06); margin-bottom:8px; }
+    .liga-header { display:flex; align-items:center; gap:10px; padding:12px 14px; cursor:pointer; user-select:none; }
+    .liga-ico { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .liga-ico img { width:36px; height:36px; object-fit:contain; }
+    .liga-info { flex:1; min-width:0; }
+    .liga-nombre { font-size:13px; font-weight:900; color:var(--texto); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .liga-meta { font-size:11px; font-weight:600; color:var(--sub); margin-top:3px; display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+    .liga-arrow { font-size:12px; color:var(--sutil); transition:transform .2s; flex-shrink:0; }
+    .liga-arrow.open { transform:rotate(180deg); }
+    .liga-body { display:none; border-top:1.5px solid var(--fondo); padding:12px 14px; flex-direction:column; gap:8px; }
+    .liga-body.open { display:flex; }
+    .action-btns { display:flex; gap:6px; }
+    .abtn { flex:1; padding:10px 4px 8px; border-radius:12px; border:1.5px solid var(--borde); background:var(--card); font-family:Nunito,sans-serif; font-size:10px; font-weight:900; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:5px; transition:all .15s; color:var(--texto); }
+    .abtn img { width:32px; height:32px; object-fit:contain; }
+    .abtn.prim { background:#eff6ff; border-color:#bfdbfe; color:var(--azul); }
+    .abtn.prim:hover { background:#dbeafe; }
+    .abtn:not(.prim):not(.disabled):hover { background:#f8fafc; }
+    .abtn.disabled { opacity:.3; pointer-events:none; filter:grayscale(.8); }
+    .abtn-del { padding:9px; border-radius:10px; border:1.5px solid #fee2e2; background:#fff5f5; color:var(--rojo); font-family:Nunito,sans-serif; font-size:11px; font-weight:900; cursor:pointer; width:100%; display:flex; align-items:center; justify-content:center; gap:6px; }
+    .abtn-del:hover { background:#fee2e2; }
+    .sec-label { font-size:10px; font-weight:900; color:var(--sutil); text-transform:uppercase; letter-spacing:.5px; margin:12px 0 6px; }
+    .alerta-card { border-radius:12px; padding:10px 13px; margin-bottom:7px; cursor:pointer; border-left:3px solid; }
+    .alerta-r { border-color:var(--rojo); background:#fff5f5; }
+    .alerta-titulo { font-size:12px; font-weight:800; }
+    .alerta-sub { font-size:10px; font-weight:600; color:var(--sutil); margin-top:2px; }
+    .search { background:var(--card); border:1.5px solid var(--borde); border-radius:12px; padding:9px 12px; display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+    .search svg { width:16px; height:16px; color:var(--sutil); flex-shrink:0; }
+    .search input { border:none; outline:none; font-family:Nunito,sans-serif; font-size:13px; font-weight:600; color:var(--texto); background:transparent; width:100%; }
   </style>
 </head>
 <body>
 <div class="page">
-
   <div id="header-container"></div>
   <nav id="nav-container"></nav>
-
   <main class="content">
-
-    <!-- Sección header -->
-    <div class="sec">
-      <div class="lp-logo">
-        <img src="icons/ligas.png" style="width:36px;height:36px;object-fit:contain">
-        <div>
-          <div class="lp-logo-txt">Liga<span>Pádel</span></div>
-          <div style="font-size:10px;font-weight:600;color:var(--sutil)" id="org-nombre">Cargando...</div>
-        </div>
-      </div>
-      <div class="sec-count" id="contador">—</div>
-    </div>
-
-    <!-- KPIs -->
     <div class="kpi-row" id="kpi-row"></div>
-
-    <!-- Alertas -->
     <div id="alertas-wrap"></div>
-
-    <!-- Ligas activas -->
-    <div id="ligas-activas-wrap"></div>
-
-    <!-- Ligas finalizadas -->
-    <div id="ligas-finalizadas-wrap"></div>
-
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="buscador" type="text" placeholder="Buscar liga..." oninput="filtrar()">
+    </div>
+    <div id="ligas-wrap"><div class="loading"><div class="spinner"></div></div></div>
   </main>
-
   <button class="fab" onclick="window.location.href='nueva-liga.html'">+</button>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -78,125 +70,116 @@
 <script>
 
 let _ligas = [];
-let _org   = null;
 
-// ── KPIs ─────────────────────────────────────────────────────
 function renderKPIs() {
   const activas   = _ligas.filter(l => ['inscripcion','activa','fase_final'].includes(l.estado));
-  const jugadores = _ligas.reduce((s, l) => s + (l.lp_parejas?.[0]?.count || 0) * 2, 0);
-  document.getElementById('kpi-row').innerHTML = `
-    <div class="kpi azul"><div class="val">${activas.length}</div><div class="lbl">Ligas activas</div></div>
-    <div class="kpi verde"><div class="val">${_ligas.length}</div><div class="lbl">Total ligas</div></div>
-    <div class="kpi azul"><div class="val">${jugadores}</div><div class="lbl">Jugadores aprox.</div></div>`;
-  document.getElementById('contador').textContent = activas.length;
+  const jugadores = _ligas.reduce((s,l) => s + (l.lp_parejas?.[0]?.count||0)*2, 0);
+  document.getElementById('kpi-row').innerHTML =
+    `<div class="kpi azul"><div class="val">${activas.length}</div><div class="lbl">Ligas activas</div></div>
+     <div class="kpi verde"><div class="val">${_ligas.length}</div><div class="lbl">Total ligas</div></div>
+     <div class="kpi azul"><div class="val">${jugadores}</div><div class="lbl">Jugadores aprox.</div></div>`;
 }
 
-// ── Alertas ────────────────────────────────────────────────────
 async function renderAlertas() {
   const wrap = document.getElementById('alertas-wrap');
-  // Buscar ligas activas con partidos pendientes
   const activas = _ligas.filter(l => l.estado === 'activa');
   if (!activas.length) { wrap.innerHTML = ''; return; }
-
-  let html = `<div style="font-size:10px;font-weight:900;color:var(--sutil);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 6px">Acciones pendientes</div>`;
-
-  for (const liga of activas.slice(0, 3)) {
-    const { data: pendientes } = await _sb.from('lp_partidos')
-      .select('id', { count: 'exact' })
-      .eq('liga_id', liga.id)
-      .eq('estado', 'pendiente');
-    const n = pendientes?.length || 0;
-    if (n > 0) {
-      html += `<div class="alerta-card alerta-r" onclick="window.location.href='liga.html?id=${liga.id}&tab=resultados'">
-        <div class="alerta-titulo" style="color:var(--rojo)">${n} resultado${n>1?'s':''} sin anotar</div>
-        <div class="alerta-sub">${liga.nombre}</div>
-      </div>`;
-    }
+  let html = `<div class="sec-label">Acciones pendientes</div>`;
+  for (const liga of activas.slice(0,3)) {
+    const { data: p } = await _sb.from('lp_partidos').select('id',{count:'exact'}).eq('liga_id',liga.id).eq('estado','pendiente');
+    const n = p?.length||0;
+    if (n > 0) html += `<div class="alerta-card alerta-r" onclick="window.location.href='liga.html?id=${liga.id}&tab=resultados'">
+      <div class="alerta-titulo" style="color:var(--rojo)">${n} resultado${n>1?'s':''} sin anotar</div>
+      <div class="alerta-sub">${liga.nombre}</div></div>`;
   }
   wrap.innerHTML = html;
 }
 
-// ── Render lista ───────────────────────────────────────────────
-function renderLigas() {
-  const activas    = _ligas.filter(l => l.estado !== 'finalizada' && l.estado !== 'borrador');
-  const borrador   = _ligas.filter(l => l.estado === 'borrador');
-  const finalizadas= _ligas.filter(l => l.estado === 'finalizada');
+function filtrar() {
+  const q = (document.getElementById('buscador')?.value||'').toLowerCase().trim();
+  renderLigas(q ? _ligas.filter(l => l.nombre.toLowerCase().includes(q)) : _ligas);
+}
 
-  let html = '';
-
-  if (activas.length || borrador.length) {
-    html += `<div style="font-size:10px;font-weight:900;color:var(--sutil);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 6px">En curso</div>`;
-    [...activas, ...borrador].forEach(l => { html += cardLiga(l); });
-  }
-
-  if (finalizadas.length) {
-    html += `<div style="font-size:10px;font-weight:900;color:var(--sutil);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 6px">Finalizadas</div>`;
-    finalizadas.forEach(l => { html += cardLiga(l); });
-  }
-
-  if (!_ligas.length) {
-    html = `<div class="loading" style="flex-direction:column;gap:12px;padding:40px 16px">
-      <div style="font-size:32px">🏆</div>
+function renderLigas(lista) {
+  lista = lista || _ligas;
+  const wrap = document.getElementById('ligas-wrap');
+  if (!lista.length) {
+    wrap.innerHTML = `<div class="loading" style="flex-direction:column;gap:12px;padding:40px 16px">
+      <div style="font-size:36px">&#127942;</div>
       <div style="font-size:14px;font-weight:800;color:var(--texto)">Crea tu primera liga</div>
-      <div style="font-size:12px;font-weight:600;color:var(--sutil);text-align:center">Pulsa el botón + para empezar</div>
-    </div>`;
+      <div style="font-size:12px;font-weight:600;color:var(--sutil);text-align:center">Pulsa el boton + para empezar</div></div>`;
+    return;
   }
-
-  document.getElementById('ligas-activas-wrap').innerHTML = html;
-  document.getElementById('ligas-finalizadas-wrap').innerHTML = '';
+  const activas     = lista.filter(l => l.estado !== 'finalizada');
+  const finalizadas = lista.filter(l => l.estado === 'finalizada');
+  let html = '';
+  if (activas.length)     { html += `<div class="sec-label">En curso</div>`;                            activas.forEach(l => html += cardLiga(l)); }
+  if (finalizadas.length) { html += `<div class="sec-label" style="margin-top:16px">Finalizadas</div>`; finalizadas.forEach(l => html += cardLiga(l)); }
+  wrap.innerHTML = html;
 }
 
 function cardLiga(l) {
-  const nParejas = l.lp_parejas?.[0]?.count || 0;
-  const nDivs    = l.lp_divisiones?.[0]?.count || 0;
-  const catColor = { Masculina:'cat-m', Femenina:'cat-f', Mixta:'cat-x', Benjamín:'cat-b', Alevín:'cat-b', Infantil:'cat-b', Cadete:'cat-b', 'Júnior':'cat-b' };
-  const catCls   = catColor[l.categoria] || 'cat-m';
-  const fmtLabel = l.formato === 'americano' ? '🔄 Americano' : '🔁 Round-Robin';
-
-  return `<div class="card" onclick="window.location.href='liga.html?id=${l.id}'">
-    <div class="card-main">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;width:40px">
-        <div class="av sq" style="background:${l.formato==='americano'?'#fffbeb':'#eff6ff'};color:${l.formato==='americano'?'#92400e':'#1e40af'};width:38px;height:38px;font-size:14px">
-          ${l.formato === 'americano' ? '🔄' : '🏆'}
+  const nParejas = l.lp_parejas?.[0]?.count||0;
+  const catColor = {Masculina:'cat-m',Femenina:'cat-f',Mixta:'cat-x'};
+  const catCls   = catColor[l.categoria]||'cat-b';
+  const estados  = {borrador:'Borrador',inscripcion:'Inscripcion abierta',activa:'Activa',fase_final:'Fase final',finalizada:'Finalizada'};
+  const icoBg    = {inscripcion:'#eff6ff',activa:'#dcfce7',fase_final:'#fef9c3',finalizada:'#f1f5f9',borrador:'#f8fafc'};
+  const insOk    = ['borrador','inscripcion'].includes(l.estado);
+  const calOk    = ['activa','fase_final','finalizada'].includes(l.estado);
+  const gestOk   = ['activa','fase_final','finalizada'].includes(l.estado);
+  return `<div class="liga-card">
+    <div class="liga-header" onclick="toggleCard(this)">
+      <div class="liga-ico" style="background:${icoBg[l.estado]||'#f1f5f9'}"><img src="icons/ligas.png"></div>
+      <div class="liga-info">
+        <div class="liga-nombre">${l.nombre}</div>
+        <div class="liga-meta">
+          <span class="cat-chip ${catCls}">${l.categoria||'Sin cat.'}</span>
+          <span>&middot;</span><span>${nParejas} pareja${nParejas!==1?'s':''}</span>
+          <span>&middot;</span><span class="chip c-${l.estado}">${estados[l.estado]||l.estado}</span>
         </div>
       </div>
-      <div class="ci">
-        <div class="cn">${l.nombre}</div>
-        <div class="cm" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:3px">
-          <span class="cat-chip ${catCls}">${l.categoria || 'Sin categoría'}</span>
-          <span class="fmt-chip">${fmtLabel}</span>
-        </div>
-        <div class="cm" style="margin-top:3px;font-size:10px;color:var(--sutil)">
-          ${nDivs} división${nDivs!==1?'es':''} · ${nParejas} pareja${nParejas!==1?'s':''}
-          ${l.temporada ? ' · '+l.temporada : ''}
-        </div>
+      <div class="liga-arrow">&#9660;</div>
+    </div>
+    <div class="liga-body">
+      <div class="action-btns">
+        <button class="abtn ${insOk?'prim':'disabled'}" onclick="event.stopPropagation();window.location.href='liga.html?id=${l.id}&tab=participantes'">
+          <img src="icons/inscripciones.png">Inscripciones</button>
+        <button class="abtn ${calOk?'prim':'disabled'}" onclick="event.stopPropagation();window.location.href='liga.html?id=${l.id}&tab=calendario'">
+          <img src="icons/calendario.png">Calendario</button>
+        <button class="abtn ${gestOk?'prim':'disabled'}" onclick="event.stopPropagation();window.location.href='liga.html?id=${l.id}&tab=resultados'">
+          <img src="icons/gestionar.png">Gestionar</button>
       </div>
-      <span class="liga-estado le-${l.estado}">${estadoLabel(l.estado)}</span>
+      <button class="abtn-del" onclick="event.stopPropagation();eliminarLiga('${l.id}','${l.nombre.replace(/'/g,'\x27')}')">
+        &#128465; Eliminar liga</button>
     </div>
   </div>`;
 }
 
-function estadoLabel(e) {
-  const m = { borrador:'Borrador', inscripcion:'Inscripción', activa:'Activa', fase_final:'Fase final', finalizada:'Finalizada' };
-  return m[e] || e;
+function toggleCard(header) {
+  const arrow  = header.querySelector('.liga-arrow');
+  const body   = header.nextElementSibling;
+  const isOpen = body.classList.contains('open');
+  document.querySelectorAll('.liga-body').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.liga-arrow').forEach(a => a.classList.remove('open'));
+  if (!isOpen) { body.classList.add('open'); arrow.classList.add('open'); }
 }
 
-// ── Init ───────────────────────────────────────────────────────
+async function eliminarLiga(id, nombre) {
+  if (!confirm('Eliminar la liga "' + nombre + '"? Esta accion no se puede deshacer.')) return;
+  await lpDeleteLiga(id);
+  _ligas = _ligas.filter(l => l.id !== id);
+  renderKPIs(); renderLigas(); toast('Liga eliminada');
+}
+
 async function init() {
-  renderHeader({ titulo:'LigaPádel', subtitulo:'Gestión de ligas', icono:'icons/ligas.png', botonDerecho:null });
+  renderHeader({ titulo:'LigaPadel', subtitulo:'Gestion de ligas', icono:'icons/inicio-liga.png', botonDerecho:null });
   renderNav('ligas');
   await lpInit();
-
-  _org = await lpGetOrganizador();
-  document.getElementById('org-nombre').textContent = _org.nombre;
-
-  showLoading('ligas-activas-wrap');
+  await lpGetOrganizador();
+  showLoading('ligas-wrap');
   _ligas = await lpGetLigas();
-  renderKPIs();
-  renderLigas();
-  await renderAlertas();
+  renderKPIs(); renderLigas(); await renderAlertas();
 }
-
 init();
 </script>
 </body>
