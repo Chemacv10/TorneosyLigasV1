@@ -371,25 +371,33 @@ async function init() {
   const ok = await lpInit();
   if (!ok) return; // sin sesión → lpInit ya redirige a index.html
 
+  // Cargar jugadores SIEMPRE (independiente del resto para no bloquear el buscador)
   try {
-    [_liga, _divisiones, _parejas, _jugadores] = await Promise.all([
+    _jugadores = await lpGetJugadores();
+  } catch(e) {
+    console.warn('Error cargando jugadores:', e);
+    _jugadores = [];
+  }
+
+  // Cargar datos de la liga (si falla, mostramos error pero los jugadores ya están)
+  try {
+    [_liga, _divisiones, _parejas] = await Promise.all([
       lpGetLiga(_ligaId),
       lpGetDivisiones(_ligaId),
       lpGetParejas(_ligaId),
-      lpGetJugadores(),
     ]);
   } catch(e) {
     document.getElementById('lista-parejas').innerHTML = `
       <div style="background:#fee2e2;border:1.5px solid #fca5a5;border-radius:12px;padding:14px;font-size:12px;font-weight:700;color:#dc2626;text-align:center">
-        Error cargando datos.<br><span style="font-weight:600;font-size:11px">${e.message || e}</span>
+        Error cargando la liga.<br><span style="font-weight:600;font-size:11px">${e.message || e}</span>
       </div>`;
     return;
   }
 
   // Actualizar header con nombre real de la liga
   renderHeader({
-    titulo:       _liga.nombre,
-    subtitulo:    'Inscripciones · ' + _parejas.length + ' parejas',
+    titulo:       _liga?.nombre || 'Inscripciones',
+    subtitulo:    'Inscripciones · ' + (_parejas?.length || 0) + ' parejas',
     icono:        'icons/inscripciones.png',
     botonDerecho: 'back',
     onBack:       'index.html',
