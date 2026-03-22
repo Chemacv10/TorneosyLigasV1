@@ -97,6 +97,28 @@
           <input class="finp" id="jug-telefono" type="tel" placeholder="6xx xxx xxx">
         </div>
         <div class="fgrp">
+          <div class="flbl">Año nacimiento</div>
+          <input class="finp" id="jug-anyo" type="number" placeholder="Ej: 1990" min="1930" max="2020">
+        </div>
+      </div>
+
+      <div class="fgrp">
+        <div class="flbl">Sexo</div>
+        <div style="display:flex;gap:8px">
+          <button type="button" id="btn-sexo-m" onclick="setSexo('M')"
+            style="flex:1;padding:9px;border-radius:12px;border:1.5px solid var(--borde);background:#fff;font-family:Nunito,sans-serif;font-size:13px;font-weight:800;cursor:pointer;color:var(--sutil)">
+            👨 Masculino
+          </button>
+          <button type="button" id="btn-sexo-f" onclick="setSexo('F')"
+            style="flex:1;padding:9px;border-radius:12px;border:1.5px solid var(--borde);background:#fff;font-family:Nunito,sans-serif;font-size:13px;font-weight:800;cursor:pointer;color:var(--sutil)">
+            👩 Femenino
+          </button>
+        </div>
+        <input type="hidden" id="jug-sexo">
+      </div>
+
+      <div class="frow">
+        <div class="fgrp">
           <div class="flbl">Nivel calculado</div>
           <div id="jug-nivel-display" style="padding:9px 12px;border-radius:12px;background:#f8fafc;border:1.5px solid var(--borde);font-size:13px;font-weight:800;color:var(--sutil);min-height:40px;display:flex;align-items:center">—</div>
         </div>
@@ -235,6 +257,23 @@ function renderLista(jugadores) {
   }).join('');
 }
 
+function setSexo(val) {
+  document.getElementById('jug-sexo').value = val;
+  const esM = val === 'M';
+  document.getElementById('btn-sexo-m').style.cssText += esM
+    ? ';background:#eff6ff;border-color:#bfdbfe;color:#1e40af;'
+    : ';background:#fff;border-color:var(--borde);color:var(--sutil);';
+  document.getElementById('btn-sexo-f').style.cssText += !esM
+    ? ';background:#f3e8ff;border-color:#d8b4fe;color:#6d28d9;'
+    : ';background:#fff;border-color:var(--borde);color:var(--sutil);';
+}
+
+function resetSexo() {
+  document.getElementById('jug-sexo').value = '';
+  document.getElementById('btn-sexo-m').style.cssText += ';background:#fff;border-color:var(--borde);color:var(--sutil);';
+  document.getElementById('btn-sexo-f').style.cssText += ';background:#fff;border-color:var(--borde);color:var(--sutil);';
+}
+
 // ── CRUD ───────────────────────────────────────────────────────
 function abrirNuevo() {
   document.getElementById('sh-titulo').textContent = 'Nuevo jugador';
@@ -242,9 +281,11 @@ function abrirNuevo() {
   document.getElementById('jug-nombre').value   = '';
   document.getElementById('jug-apellidos').value= '';
   document.getElementById('jug-telefono').value = '';
+  document.getElementById('jug-anyo').value     = '';
   document.getElementById('jug-email').value    = '';
   document.getElementById('jug-notas').value    = '';
   document.getElementById('jug-nivel-display').textContent = '—';
+  resetSexo();
   openSheet('sh-jugador');
 }
 
@@ -256,10 +297,13 @@ function abrirEditar(id) {
   document.getElementById('jug-nombre').value        = j.nombre || '';
   document.getElementById('jug-apellidos').value     = j.apellidos || '';
   document.getElementById('jug-telefono').value      = j.telefono || '';
+  document.getElementById('jug-anyo').value          = j.año_nacimiento || '';
   document.getElementById('jug-email').value         = j.email || '';
   document.getElementById('jug-notas').value         = j.notas || '';
   document.getElementById('jug-nivel-display').textContent =
     j.nivel != null ? `⭐ ${parseFloat(j.nivel).toFixed(1)}` : '—';
+  resetSexo();
+  if (j.sexo) setSexo(j.sexo);
   openSheet('sh-jugador');
 }
 
@@ -270,10 +314,12 @@ async function guardar() {
   const idVal = document.getElementById('jug-id').value;
   const jugador = {
     nombre,
-    apellidos:  document.getElementById('jug-apellidos').value.trim() || null,
-    telefono:   document.getElementById('jug-telefono').value.trim()  || null,
-    email:      document.getElementById('jug-email').value.trim()     || null,
-    notas:      document.getElementById('jug-notas').value.trim()     || null,
+    apellidos:      document.getElementById('jug-apellidos').value.trim() || null,
+    telefono:       document.getElementById('jug-telefono').value.trim()  || null,
+    email:          document.getElementById('jug-email').value.trim()     || null,
+    notas:          document.getElementById('jug-notas').value.trim()     || null,
+    sexo:           document.getElementById('jug-sexo').value             || null,
+    año_nacimiento: document.getElementById('jug-anyo').value ? parseInt(document.getElementById('jug-anyo').value) : null,
   };
   if (idVal) jugador.id = idVal;
 
