@@ -6,11 +6,8 @@
   <title>Jugadores — LigaPádel</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .nivel-chip { display:inline-flex; padding:2px 8px; border-radius:100px; font-size:10px; font-weight:800; }
-    .nv-p { background:#f0fdf4; color:#15803d; }
-    .nv-i { background:#eff6ff; color:#1e40af; }
-    .nv-a { background:#fef9c3; color:#92400e; }
-    .nv-x { background:#f1f5f9; color:#64748b; }
+    .nivel-badge { display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:100px; font-size:10px; font-weight:800; background:#eff6ff; color:#1e40af; }
+    .nivel-null  { background:#f1f5f9; color:#94a3b8; }
 
     .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:8px; }
     .stat-item { background:#f8fafc; border-radius:8px; padding:6px 8px; text-align:center; }
@@ -37,7 +34,7 @@
 
     <div class="sec">
       <img src="icons/jugadores.png">
-      <div class="sec-title">Jugadores del club</div>
+      <div class="sec-title">Jugadores</div>
       <div class="sec-count" id="contador">—</div>
     </div>
 
@@ -53,9 +50,11 @@
         <div class="filter-label">Nivel</div>
         <select class="fsel" id="filtro-nivel" onchange="filtrar()">
           <option value="">Todos</option>
-          <option>Principiante</option>
-          <option>Intermedio</option>
-          <option>Avanzado</option>
+          <option value="0-1">0 – 1</option>
+          <option value="1-2">1 – 2</option>
+          <option value="2-3">2 – 3</option>
+          <option value="3-4">3 – 4</option>
+          <option value="4-5">4 – 5</option>
         </select>
       </div>
       <div style="flex:1">
@@ -98,13 +97,8 @@
           <input class="finp" id="jug-telefono" type="tel" placeholder="6xx xxx xxx">
         </div>
         <div class="fgrp">
-          <div class="flbl">Nivel</div>
-          <select class="fsel" id="jug-nivel">
-            <option value="">Sin especificar</option>
-            <option>Principiante</option>
-            <option>Intermedio</option>
-            <option>Avanzado</option>
-          </select>
+          <div class="flbl">Nivel calculado</div>
+          <div id="jug-nivel-display" style="padding:9px 12px;border-radius:12px;background:#f8fafc;border:1.5px solid var(--borde);font-size:13px;font-weight:800;color:var(--sutil);min-height:40px;display:flex;align-items:center">—</div>
         </div>
       </div>
 
@@ -143,7 +137,7 @@
 <div class="overlay" id="sh-info-pagina">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">Jugadores del club</div>
+    <div class="sheet-title">Jugadores</div>
     <div style="font-size:14px;font-weight:600;color:var(--sub);line-height:1.65;padding-bottom:8px">
       Base de datos de jugadores del club. Son independientes de las ligas — puedes reutilizar el mismo jugador en diferentes ligas y torneos, y aquí se acumula su historial completo.
     </div>
@@ -168,11 +162,15 @@ function filtrar() {
   const activo = document.getElementById('filtro-activo').value;
 
   const lista = _jugadores.filter(j => {
-    if (nivel && j.nivel !== nivel) return false;
+    if (nivel) {
+      const [min, max] = nivel.split('-').map(Number);
+      const nv = j.nivel != null ? parseFloat(j.nivel) : null;
+      if (nv === null || nv < min || nv > max) return false;
+    }
     if (activo === 'true'  && !j.activo) return false;
     if (activo === 'false' && j.activo)  return false;
     if (!q) return true;
-    const hay = [j.nombre, j.apellidos, j.telefono, j.email, j.nivel, j.notas]
+    const hay = [j.nombre, j.apellidos, j.telefono, j.email, j.notas]
       .filter(Boolean).join(' ').toLowerCase();
     return q.split(/\s+/).filter(Boolean).every(p => hay.includes(p));
   }).sort((a, b) => {
@@ -193,16 +191,14 @@ function renderLista(jugadores) {
     return;
   }
 
-  const nivelCls = { Principiante:'nv-p', Intermedio:'nv-i', Avanzado:'nv-a' };
-
   el.innerHTML = jugadores.map(j => {
     const nombre = [j.nombre, j.apellidos].filter(Boolean).join(' ');
     const iniciales = [j.nombre?.[0], j.apellidos?.[0]].filter(Boolean).join('').toUpperCase() || '?';
     const bgColor = colorAvatar(nombre);
     const inactivo = !j.activo;
-    const nivelTag = j.nivel
-      ? `<span class="nivel-chip ${nivelCls[j.nivel] || 'nv-x'}">${j.nivel}</span>`
-      : '';
+    const nivelTag = j.nivel != null
+      ? `<span class="nivel-badge">⭐ ${parseFloat(j.nivel).toFixed(1)}</span>`
+      : `<span class="nivel-badge nivel-null">Sin nivel</span>`;
 
     return `
     <div class="card" id="card-${j.id}" style="${inactivo ? 'opacity:.5;' : ''}">
@@ -247,8 +243,8 @@ function abrirNuevo() {
   document.getElementById('jug-apellidos').value= '';
   document.getElementById('jug-telefono').value = '';
   document.getElementById('jug-email').value    = '';
-  document.getElementById('jug-nivel').value    = '';
   document.getElementById('jug-notas').value    = '';
+  document.getElementById('jug-nivel-display').textContent = '—';
   openSheet('sh-jugador');
 }
 
@@ -261,8 +257,9 @@ function abrirEditar(id) {
   document.getElementById('jug-apellidos').value     = j.apellidos || '';
   document.getElementById('jug-telefono').value      = j.telefono || '';
   document.getElementById('jug-email').value         = j.email || '';
-  document.getElementById('jug-nivel').value         = j.nivel || '';
   document.getElementById('jug-notas').value         = j.notas || '';
+  document.getElementById('jug-nivel-display').textContent =
+    j.nivel != null ? `⭐ ${parseFloat(j.nivel).toFixed(1)}` : '—';
   openSheet('sh-jugador');
 }
 
@@ -276,7 +273,6 @@ async function guardar() {
     apellidos:  document.getElementById('jug-apellidos').value.trim() || null,
     telefono:   document.getElementById('jug-telefono').value.trim()  || null,
     email:      document.getElementById('jug-email').value.trim()     || null,
-    nivel:      document.getElementById('jug-nivel').value            || null,
     notas:      document.getElementById('jug-notas').value.trim()     || null,
   };
   if (idVal) jugador.id = idVal;
