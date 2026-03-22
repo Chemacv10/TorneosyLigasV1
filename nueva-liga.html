@@ -79,25 +79,11 @@
       <div class="frow">
         <div class="fgrp">
           <div class="flbl">Categoría</div>
-          <select class="fsel" id="f1-categoria">
-            <option>Masculina</option>
-            <option>Femenina</option>
-            <option>Mixta</option>
-          </select>
+          <div class="csel-wrap" id="f1-categoria-csel"></div>
         </div>
         <div class="fgrp">
           <div class="flbl">Edad</div>
-          <select class="fsel" id="f1-categoria-edad">
-            <option value="Absoluto">Absoluto</option>
-            <option value="Benjamín">Benjamín</option>
-            <option value="Alevín">Alevín</option>
-            <option value="Infantil">Infantil</option>
-            <option value="Cadete">Cadete</option>
-            <option value="Juvenil">Juvenil</option>
-            <option value="Veteranos +35">Veteranos +35</option>
-            <option value="Veteranos +45">Veteranos +45</option>
-            <option value="Veteranos +55">Veteranos +55</option>
-          </select>
+          <div class="csel-wrap" id="f1-edad-csel"></div>
         </div>
       </div>
       <div class="frow">
@@ -147,18 +133,6 @@
           <div class="flbl">URL pública</div>
           <input class="finp" id="f1-url" placeholder="liga-masc-2526" oninput="sanitizarUrl(this)">
         </div>
-      </div>
-
-      <div style="font-size:10px;font-weight:900;color:var(--sutil);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 8px">Material a entregar</div>
-      <div class="material-chips" id="material-chips">
-        <div class="material-chip" onclick="togMaterial(this,'Bote de bolas')">🎾 Bote de bolas</div>
-        <div class="material-chip" onclick="togMaterial(this,'Camiseta')">👕 Camiseta</div>
-        <div class="material-chip" onclick="togMaterial(this,'Trofeo')">🏆 Trofeo</div>
-        <div class="material-chip" onclick="togMaterial(this,'Bolsa deportiva')">🎒 Bolsa</div>
-      </div>
-      <div class="nuevo-inline" id="nuevo-material-wrap">
-        <input class="finp" id="nuevo-material-inp" placeholder="Otro material…" onkeydown="if(event.key==='Enter'){event.preventDefault();addMaterial();}">
-        <button class="sbtn prim" type="button" onclick="addMaterial()">+</button>
       </div>
 
       <div class="sheet-btns" style="margin-top:16px">
@@ -464,8 +438,8 @@ async function crearLiga() {
     // 1. Crear la liga
     const liga = await lpSaveLiga({
       nombre:     document.getElementById('f1-nombre').value.trim(),
-      categoria:  document.getElementById('f1-categoria').value,
-      categoria_edad: document.getElementById('f1-categoria-edad').value,
+      categoria:  cselGetValue('f1-categoria-csel'),
+      categoria_edad: cselGetValue('f1-edad-csel'),
       temporada:  document.getElementById('f1-temporada').value.trim() || null,
       formato:    document.getElementById('f1-formato').value,
       sets_partido: document.getElementById('f1-sets').value,
@@ -547,6 +521,12 @@ async function init() {
   renderHeader({ titulo:'LigaPádel', subtitulo:'Nueva liga', icono:'icons/ligas.png', botonDerecho:null });
   renderNav('ligas');
   const ok = await lpInit(); if (!ok) return;
+
+  // Inicializar csel de categoría y edad
+  cselRender('f1-categoria-csel', ['Masculina','Femenina','Mixta'], 'Masculina', null,
+    null, null, null, null);
+  cselRender('f1-edad-csel', ['Absoluto','Benjamín','Alevín','Infantil','Cadete','Juvenil','Veteranos +35','Veteranos +45','Veteranos +55'],
+    'Absoluto', null, null, null, null, null);
 
   // Fecha sugerida: hoy + 1 semana a hoy + 7 meses
   const hoy = new Date();
