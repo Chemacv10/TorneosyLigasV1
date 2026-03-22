@@ -1,343 +1,653 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <title>Jugadores — LigaPádel</title>
-  <link rel="stylesheet" href="css/style.css">
-  <style>
-    .nivel-chip { display:inline-flex; padding:2px 8px; border-radius:100px; font-size:10px; font-weight:800; }
-    .nv-p { background:#f0fdf4; color:#15803d; }
-    .nv-i { background:#eff6ff; color:#1e40af; }
-    .nv-a { background:#fef9c3; color:#92400e; }
-    .nv-x { background:#f1f5f9; color:#64748b; }
+// ─────────────────────────────────────────────────────────────
+//  LIGAPÁDEL — Store (capa de datos)
+//  Todas las operaciones con Supabase van aquí.
+//  Prefijo lp_ en todas las tablas para no colisionar con Escuela de Pádel.
+// ─────────────────────────────────────────────────────────────
 
-    .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:8px; }
-    .stat-item { background:#f8fafc; border-radius:8px; padding:6px 8px; text-align:center; }
-    .stat-v { font-size:16px; font-weight:900; color:var(--texto); }
-    .stat-l { font-size:9px; font-weight:700; color:var(--sutil); margin-top:1px; }
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-    .jug-tel { font-size:11px; font-weight:700; color:var(--azul); cursor:pointer; }
-    .jug-tel:hover { text-decoration:underline; }
+const LP = {
+  orgId: null,
+  usuario: null,
+};
 
-    /* Sheet jugador */
-    .nuevo-inline { display:flex; gap:6px; align-items:center; margin:-4px 0 8px; animation:fadeIn .15s ease; }
-    .nuevo-inline .finp { flex:1; }
-    .nuevo-inline .sbtn { padding:9px 12px; min-width:0; flex-shrink:0; }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
-  </style>
-</head>
-<body>
-<div class="page">
+// ── Init ──────────────────────────────────────────────────────
 
-  <div id="header-container"></div>
-  <nav id="nav-container"></nav>
-
-  <main class="content">
-
-    <div class="sec">
-      <img src="icons/jugadores.png">
-      <div class="sec-title">Jugadores del club</div>
-      <div class="sec-count" id="contador">—</div>
-    </div>
-
-    <!-- Buscador -->
-    <div class="search">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input id="buscador" placeholder="Buscar jugador…" oninput="filtrar()">
-    </div>
-
-    <!-- Filtros -->
-    <div style="display:flex;gap:8px;margin-bottom:10px">
-      <div style="flex:1">
-        <div class="filter-label">Nivel</div>
-        <select class="fsel" id="filtro-nivel" onchange="filtrar()">
-          <option value="">Todos</option>
-          <option>Principiante</option>
-          <option>Intermedio</option>
-          <option>Avanzado</option>
-        </select>
-      </div>
-      <div style="flex:1">
-        <div class="filter-label">Estado</div>
-        <select class="fsel" id="filtro-activo" onchange="filtrar()">
-          <option value="">Todos</option>
-          <option value="true">Activos</option>
-          <option value="false">Inactivos</option>
-        </select>
-      </div>
-    </div>
-
-    <div id="lista-jugadores"><div class="loading"><div class="spinner"></div></div></div>
-
-  </main>
-
-  <button class="fab" onclick="abrirNuevo()">+</button>
-
-  <!-- Sheet jugador -->
-  <div class="overlay" id="sh-jugador">
-    <div class="sheet">
-      <div class="sheet-handle"></div>
-      <div class="sheet-title" id="sh-titulo">Nuevo jugador</div>
-      <input type="hidden" id="jug-id">
-
-      <div class="frow">
-        <div class="fgrp">
-          <div class="flbl">Nombre *</div>
-          <input class="finp" id="jug-nombre" placeholder="Ej: Carlos">
-        </div>
-        <div class="fgrp">
-          <div class="flbl">Apellidos</div>
-          <input class="finp" id="jug-apellidos" placeholder="Ej: Martínez">
-        </div>
-      </div>
-
-      <div class="frow">
-        <div class="fgrp">
-          <div class="flbl">Teléfono</div>
-          <input class="finp" id="jug-telefono" type="tel" placeholder="6xx xxx xxx">
-        </div>
-        <div class="fgrp">
-          <div class="flbl">Nivel</div>
-          <select class="fsel" id="jug-nivel">
-            <option value="">Sin especificar</option>
-            <option>Principiante</option>
-            <option>Intermedio</option>
-            <option>Avanzado</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="fgrp">
-        <div class="flbl">Email</div>
-        <input class="finp" id="jug-email" type="email" placeholder="correo@ejemplo.com">
-      </div>
-
-      <div class="fgrp">
-        <div class="flbl">Notas</div>
-        <input class="finp" id="jug-notas" placeholder="Ej: zurdo, lesión rodilla...">
-      </div>
-
-      <div class="sheet-btns">
-        <button class="sbtn" onclick="closeSheet('sh-jugador')">Cancelar</button>
-        <button class="sbtn prim" onclick="guardar()">✓ Guardar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Confirm -->
-  <div class="confirm-overlay" id="confirm-overlay">
-    <div class="confirm-box">
-      <div class="confirm-titulo" id="confirm-titulo">¿Eliminar jugador?</div>
-      <div class="confirm-texto" id="confirm-texto">Esta acción no se puede deshacer.</div>
-      <div class="confirm-btns">
-        <button class="cbtn" onclick="document.getElementById('confirm-overlay').classList.remove('open')">Cancelar</button>
-        <button class="cbtn danger" id="confirm-ok">Confirmar</button>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<!-- Sheet info -->
-<div class="overlay" id="sh-info-pagina">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">Jugadores del club</div>
-    <div style="font-size:14px;font-weight:600;color:var(--sub);line-height:1.65;padding-bottom:8px">
-      Base de datos de jugadores del club. Son independientes de las ligas — puedes reutilizar el mismo jugador en diferentes ligas y torneos, y aquí se acumula su historial completo.
-    </div>
-    <div class="sheet-btns">
-      <button class="sbtn prim" style="flex:1" onclick="closeSheet('sh-info-pagina')">Entendido</button>
-    </div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js"></script>
-<script src="js/store-liga.js"></script>
-<script src="js/ui.js"></script>
-<script>
-
-let _jugadores = [];
-
-// ── Filtrar ────────────────────────────────────────────────────
-function filtrar() {
-  const q      = (document.getElementById('buscador').value || '').toLowerCase().trim();
-  const nivel  = document.getElementById('filtro-nivel').value;
-  const activo = document.getElementById('filtro-activo').value;
-
-  const lista = _jugadores.filter(j => {
-    if (nivel && j.nivel !== nivel) return false;
-    if (activo === 'true'  && !j.activo) return false;
-    if (activo === 'false' && j.activo)  return false;
-    if (!q) return true;
-    const hay = [j.nombre, j.apellidos, j.telefono, j.email, j.nivel, j.notas]
-      .filter(Boolean).join(' ').toLowerCase();
-    return q.split(/\s+/).filter(Boolean).every(p => hay.includes(p));
-  }).sort((a, b) => {
-    const na = (a.apellidos || a.nombre).toLowerCase();
-    const nb = (b.apellidos || b.nombre).toLowerCase();
-    return na.localeCompare(nb, 'es');
-  });
-
-  renderLista(lista);
-}
-
-// ── Render ─────────────────────────────────────────────────────
-function renderLista(jugadores) {
-  document.getElementById('contador').textContent = jugadores.filter(j => j.activo).length;
-  const el = document.getElementById('lista-jugadores');
-  if (!jugadores.length) {
-    showEmpty('lista-jugadores', 'Sin jugadores con ese filtro');
+async function lpInit() {
+  const { data: { user } } = await _sb.auth.getUser();
+  if (!user) {
+    window.location.href = '../index.html';
     return;
   }
+  LP.usuario = user;
 
-  const nivelCls = { Principiante:'nv-p', Intermedio:'nv-i', Avanzado:'nv-a' };
+  // Buscar o crear organizador
+  const { data: org } = await _sb
+    .from('lp_organizadores')
+    .select('id')
+    .eq('usuario_id', user.id)
+    .maybeSingle();
 
-  el.innerHTML = jugadores.map(j => {
-    const nombre = [j.nombre, j.apellidos].filter(Boolean).join(' ');
-    const iniciales = [j.nombre?.[0], j.apellidos?.[0]].filter(Boolean).join('').toUpperCase() || '?';
-    const bgColor = colorAvatar(nombre);
-    const inactivo = !j.activo;
-    const nivelTag = j.nivel
-      ? `<span class="nivel-chip ${nivelCls[j.nivel] || 'nv-x'}">${j.nivel}</span>`
-      : '';
-
-    return `
-    <div class="card" id="card-${j.id}" style="${inactivo ? 'opacity:.5;' : ''}">
-      <div class="card-main" onclick="toggleCard('${j.id}')">
-        <div class="av" style="background:${bgColor};color:#fff;font-size:13px;font-weight:900;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${iniciales}</div>
-        <div class="ci">
-          <div class="cn">${nombre}${inactivo ? ' <span style="font-size:10px;color:var(--rojo);font-weight:800">inactivo</span>' : ''}</div>
-          <div class="cm" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:3px">
-            ${nivelTag}
-            ${j.ligas_jugadas > 0 ? `<span style="font-size:10px;color:var(--sutil);font-weight:600">${j.ligas_jugadas} liga${j.ligas_jugadas !== 1 ? 's' : ''}</span>` : ''}
-          </div>
-        </div>
-        <div class="chev" id="chev-${j.id}">▼</div>
-      </div>
-      <div class="exp" id="exp-${j.id}">
-        ${j.telefono ? `<div class="dl">Teléfono</div><div class="dv"><span class="jug-tel" onclick="window.open('tel:${j.telefono}')">${j.telefono}</span></div>` : ''}
-        ${j.email    ? `<div class="dl">Email</div><div class="dv">${j.email}</div>` : ''}
-        ${j.notas    ? `<div class="dl">Notas</div><div class="dv">${j.notas}</div>` : ''}
-        <div class="stats-row">
-          <div class="stat-item"><div class="stat-v">${j.ligas_jugadas || 0}</div><div class="stat-l">Ligas</div></div>
-          <div class="stat-item"><div class="stat-v">${j.partidos_jugados || 0}</div><div class="stat-l">Partidos</div></div>
-          <div class="stat-item"><div class="stat-v">${j.partidos_ganados || 0}</div><div class="stat-l">Victorias</div></div>
-        </div>
-        <div class="abtns">
-          ${j.telefono ? `<button class="abtn" onclick="window.open('https://wa.me/34${j.telefono.replace(/\s/g,'')}')">💬 WhatsApp</button>` : ''}
-          <button class="abtn prim" onclick="abrirEditar('${j.id}')">✏️ Editar</button>
-          ${j.activo
-            ? `<button class="abtn warn" onclick="confirmarDesactivar('${j.id}','${nombre.replace(/'/g,"\\'")}')">🚫 Desactivar</button>`
-            : `<button class="abtn" style="border-color:var(--verde);color:var(--verde)" onclick="reactivar('${j.id}')">✓ Reactivar</button>`}
-          <button class="abtn dang" onclick="confirmarEliminar('${j.id}','${nombre.replace(/'/g,"\\'")}')">🗑</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ── CRUD ───────────────────────────────────────────────────────
-function abrirNuevo() {
-  document.getElementById('sh-titulo').textContent = 'Nuevo jugador';
-  document.getElementById('jug-id').value       = '';
-  document.getElementById('jug-nombre').value   = '';
-  document.getElementById('jug-apellidos').value= '';
-  document.getElementById('jug-telefono').value = '';
-  document.getElementById('jug-email').value    = '';
-  document.getElementById('jug-nivel').value    = '';
-  document.getElementById('jug-notas').value    = '';
-  openSheet('sh-jugador');
-}
-
-function abrirEditar(id) {
-  const j = _jugadores.find(x => x.id === id);
-  if (!j) return;
-  document.getElementById('sh-titulo').textContent   = 'Editar jugador';
-  document.getElementById('jug-id').value            = j.id;
-  document.getElementById('jug-nombre').value        = j.nombre || '';
-  document.getElementById('jug-apellidos').value     = j.apellidos || '';
-  document.getElementById('jug-telefono').value      = j.telefono || '';
-  document.getElementById('jug-email').value         = j.email || '';
-  document.getElementById('jug-nivel').value         = j.nivel || '';
-  document.getElementById('jug-notas').value         = j.notas || '';
-  openSheet('sh-jugador');
-}
-
-async function guardar() {
-  const nombre = document.getElementById('jug-nombre').value.trim();
-  if (!nombre) { toast('Escribe el nombre', 'warn'); return; }
-
-  const idVal = document.getElementById('jug-id').value;
-  const jugador = {
-    nombre,
-    apellidos:  document.getElementById('jug-apellidos').value.trim() || null,
-    telefono:   document.getElementById('jug-telefono').value.trim()  || null,
-    email:      document.getElementById('jug-email').value.trim()     || null,
-    nivel:      document.getElementById('jug-nivel').value            || null,
-    notas:      document.getElementById('jug-notas').value.trim()     || null,
-  };
-  if (idVal) jugador.id = idVal;
-
-  try {
-    await lpSaveJugador(jugador);
-    closeSheet('sh-jugador');
-    toast('Jugador guardado', 'ok');
-    await cargar();
-  } catch(e) {
-    toast('Error: ' + (e.message || JSON.stringify(e)), 'err');
-    console.error(e);
+  if (org) {
+    LP.orgId = org.id;
+  } else {
+    const { data: newOrg, error } = await _sb
+      .from('lp_organizadores')
+      .insert({ usuario_id: user.id, nombre: 'Mi Club' })
+      .select('id')
+      .single();
+    if (error) { console.error('Error creando organizador:', error); return; }
+    LP.orgId = newOrg.id;
   }
 }
 
-function confirmarDesactivar(id, nombre) {
-  document.getElementById('confirm-titulo').textContent = '¿Desactivar jugador?';
-  document.getElementById('confirm-texto').textContent  = `${nombre} no aparecerá en las nuevas ligas pero se conserva su historial.`;
-  document.getElementById('confirm-overlay').classList.add('open');
-  document.getElementById('confirm-ok').onclick = async () => {
-    document.getElementById('confirm-overlay').classList.remove('open');
-    try { await lpSaveJugador({ id, activo: false }); toast('Jugador desactivado', 'warn'); await cargar(); }
-    catch(e) { toast('Error', 'err'); }
-  };
+// ── Organizador ────────────────────────────────────────────────
+
+async function lpGetOrganizador() {
+  const { data, error } = await _sb
+    .from('lp_organizadores')
+    .select('*')
+    .eq('id', LP.orgId)
+    .single();
+  if (error) throw error;
+  return data;
 }
 
-async function reactivar(id) {
-  try { await lpSaveJugador({ id, activo: true }); toast('✓ Reactivado', 'ok'); await cargar(); }
-  catch(e) { toast('Error', 'err'); }
+async function lpSaveOrganizador(datos) {
+  const { data, error } = await _sb
+    .from('lp_organizadores')
+    .update(datos)
+    .eq('id', LP.orgId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
 }
 
-function confirmarEliminar(id, nombre) {
-  document.getElementById('confirm-titulo').textContent = '¿Eliminar jugador?';
-  document.getElementById('confirm-texto').textContent  = `¿Eliminar a ${nombre}? Se perderá todo su historial. Esta acción no se puede deshacer.`;
-  document.getElementById('confirm-overlay').classList.add('open');
-  document.getElementById('confirm-ok').onclick = async () => {
-    document.getElementById('confirm-overlay').classList.remove('open');
-    try { await lpDeleteJugador(id); toast('Jugador eliminado', 'ok'); await cargar(); }
-    catch(e) { toast('Error al eliminar', 'err'); }
-  };
+// ── Jugadores ──────────────────────────────────────────────────
+
+async function lpGetJugadores(filtros = {}) {
+  let q = _sb
+    .from('lp_jugadores')
+    .select('*')
+    .eq('organizador_id', LP.orgId)
+    .order('apellidos', { nullsFirst: false })
+    .order('nombre');
+  if (filtros.activo !== undefined) q = q.eq('activo', filtros.activo);
+  if (filtros.nivel) q = q.eq('nivel', filtros.nivel);
+  if (filtros.busqueda) q = q.or(`nombre.ilike.%${filtros.busqueda}%,apellidos.ilike.%${filtros.busqueda}%`);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data || [];
 }
 
-// ── Carga ──────────────────────────────────────────────────────
-async function cargar() {
-  showLoading('lista-jugadores');
-  _jugadores = await lpGetJugadores();
-  filtrar();
+async function lpSaveJugador(jugador) {
+  if (jugador.id) {
+    const { id, ...campos } = jugador;
+    const { data, error } = await _sb
+      .from('lp_jugadores')
+      .update({ ...campos, organizador_id: LP.orgId })
+      .eq('id', id)
+      .eq('organizador_id', LP.orgId)
+      .select().single();
+    if (error) throw error;
+    return data;
+  } else {
+    const { id: _, ...sinId } = jugador;
+    const { data, error } = await _sb
+      .from('lp_jugadores')
+      .insert({ ...sinId, organizador_id: LP.orgId })
+      .select().single();
+    if (error) throw error;
+    return data;
+  }
 }
 
-// ── Init ───────────────────────────────────────────────────────
-async function init() {
-  renderHeader({
-    titulo: 'LigaPádel', subtitulo: 'Jugadores',
-    icono: 'icons/jugadores.png', botonDerecho: null
+async function lpDeleteJugador(id) {
+  const { error } = await _sb
+    .from('lp_jugadores')
+    .delete()
+    .eq('id', id)
+    .eq('organizador_id', LP.orgId);
+  if (error) throw error;
+}
+
+// ── Ligas ──────────────────────────────────────────────────────
+
+async function lpGetLigas(filtros = {}) {
+  let q = _sb
+    .from('lp_ligas')
+    .select('*, lp_divisiones(count), lp_parejas(count)')
+    .eq('organizador_id', LP.orgId)
+    .order('created_at', { ascending: false });
+  if (filtros.estado) q = q.eq('estado', filtros.estado);
+  if (filtros.categoria) q = q.eq('categoria', filtros.categoria);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data || [];
+}
+
+async function lpGetLiga(id) {
+  const { data, error } = await _sb
+    .from('lp_ligas')
+    .select('*')
+    .eq('id', id)
+    .eq('organizador_id', LP.orgId)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function lpSaveLiga(liga) {
+  const now = new Date().toISOString();
+  if (liga.id) {
+    const { id, ...campos } = liga;
+    const { data, error } = await _sb
+      .from('lp_ligas')
+      .update({ ...campos, organizador_id: LP.orgId, updated_at: now })
+      .eq('id', id)
+      .select().single();
+    if (error) throw error;
+    return data;
+  } else {
+    const { id: _, ...sinId } = liga;
+    const { data, error } = await _sb
+      .from('lp_ligas')
+      .insert({ ...sinId, organizador_id: LP.orgId, updated_at: now })
+      .select().single();
+    if (error) throw error;
+    return data;
+  }
+}
+
+async function lpDeleteLiga(id) {
+  const { error } = await _sb
+    .from('lp_ligas')
+    .delete()
+    .eq('id', id)
+    .eq('organizador_id', LP.orgId);
+  if (error) throw error;
+}
+
+// ── Divisiones ─────────────────────────────────────────────────
+
+async function lpGetDivisiones(ligaId) {
+  const { data, error } = await _sb
+    .from('lp_divisiones')
+    .select('*')
+    .eq('liga_id', ligaId)
+    .order('orden');
+  if (error) throw error;
+  return data || [];
+}
+
+async function lpSaveDivision(div) {
+  if (div.id) {
+    const { id, ...campos } = div;
+    const { data, error } = await _sb
+      .from('lp_divisiones')
+      .update(campos)
+      .eq('id', id)
+      .select().single();
+    if (error) throw error;
+    return data;
+  } else {
+    const { id: _, ...sinId } = div;
+    const { data, error } = await _sb
+      .from('lp_divisiones')
+      .insert(sinId)
+      .select().single();
+    if (error) throw error;
+    return data;
+  }
+}
+
+async function lpDeleteDivision(id) {
+  const { error } = await _sb.from('lp_divisiones').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// ── Jornadas ───────────────────────────────────────────────────
+
+async function lpGetJornadas(ligaId) {
+  const { data, error } = await _sb
+    .from('lp_jornadas')
+    .select('*')
+    .eq('liga_id', ligaId)
+    .order('numero');
+  if (error) throw error;
+  return data || [];
+}
+
+async function lpSaveJornada(jornada) {
+  if (jornada.id) {
+    const { id, ...campos } = jornada;
+    const { data, error } = await _sb
+      .from('lp_jornadas')
+      .update(campos)
+      .eq('id', id)
+      .select().single();
+    if (error) throw error;
+    return data;
+  } else {
+    const { id: _, ...sinId } = jornada;
+    const { data, error } = await _sb
+      .from('lp_jornadas')
+      .insert(sinId)
+      .select().single();
+    if (error) throw error;
+    return data;
+  }
+}
+
+async function lpSaveJornadasLote(jornadas) {
+  const { data, error } = await _sb
+    .from('lp_jornadas')
+    .insert(jornadas)
+    .select();
+  if (error) throw error;
+  return data || [];
+}
+
+async function lpDeleteJornadasLiga(ligaId) {
+  const { error } = await _sb.from('lp_jornadas').delete().eq('liga_id', ligaId);
+  if (error) throw error;
+}
+
+// ── Parejas ────────────────────────────────────────────────────
+
+async function lpGetParejas(ligaId, filtros = {}) {
+  let q = _sb
+    .from('lp_parejas')
+    .select('*, lp_jugadores!lp_parejas_jugador1_id_fkey(id,nombre,apellidos,nivel), lp_jugadores!lp_parejas_jugador2_id_fkey(id,nombre,apellidos,nivel)')
+    .eq('liga_id', ligaId)
+    .order('nombre1');
+  if (filtros.division_id) q = q.eq('division_id', filtros.division_id);
+  if (filtros.estado_inscripcion) q = q.eq('estado_inscripcion', filtros.estado_inscripcion);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data || [];
+}
+
+async function lpSavePareja(pareja) {
+  if (pareja.id) {
+    const { id, ...campos } = pareja;
+    const { data, error } = await _sb
+      .from('lp_parejas')
+      .update(campos)
+      .eq('id', id)
+      .select().single();
+    if (error) throw error;
+    return data;
+  } else {
+    const { id: _, ...sinId } = pareja;
+    const { data, error } = await _sb
+      .from('lp_parejas')
+      .insert(sinId)
+      .select().single();
+    if (error) throw error;
+    return data;
+  }
+}
+
+async function lpDeletePareja(id) {
+  const { error } = await _sb.from('lp_parejas').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// ── Partidos ───────────────────────────────────────────────────
+
+async function lpGetPartidos(ligaId, filtros = {}) {
+  let q = _sb
+    .from('lp_partidos')
+    .select('*, lp_jornadas(numero,tipo,fecha_ini,fecha_fin), pareja_a:lp_parejas!lp_partidos_pareja_a_id_fkey(id,nombre1,nombre2), pareja_b:lp_parejas!lp_partidos_pareja_b_id_fkey(id,nombre1,nombre2)')
+    .eq('liga_id', ligaId)
+    .order('created_at');
+  if (filtros.jornada_id) q = q.eq('jornada_id', filtros.jornada_id);
+  if (filtros.division_id) q = q.eq('division_id', filtros.division_id);
+  if (filtros.estado) q = q.eq('estado', filtros.estado);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data || [];
+}
+
+async function lpSavePartido(partido) {
+  const now = new Date().toISOString();
+  if (partido.id) {
+    const { id, ...campos } = partido;
+    const { data, error } = await _sb
+      .from('lp_partidos')
+      .update({ ...campos, updated_at: now })
+      .eq('id', id)
+      .select().single();
+    if (error) throw error;
+    return data;
+  } else {
+    const { id: _, ...sinId } = partido;
+    const { data, error } = await _sb
+      .from('lp_partidos')
+      .insert({ ...sinId, updated_at: now })
+      .select().single();
+    if (error) throw error;
+    return data;
+  }
+}
+
+async function lpSavePartidosLote(partidos) {
+  const { data, error } = await _sb
+    .from('lp_partidos')
+    .insert(partidos)
+    .select();
+  if (error) throw error;
+  return data || [];
+}
+
+async function lpDeletePartidosLiga(ligaId) {
+  const { error } = await _sb.from('lp_partidos').delete().eq('liga_id', ligaId);
+  if (error) throw error;
+}
+
+// ── Normativa ──────────────────────────────────────────────────
+
+async function lpGetNormativa(ligaId) {
+  const { data, error } = await _sb
+    .from('lp_normativa')
+    .select('*')
+    .eq('liga_id', ligaId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+async function lpSaveNormativa(norm) {
+  const { error } = await _sb
+    .from('lp_normativa')
+    .upsert({ ...norm, updated_at: new Date().toISOString() }, { onConflict: 'liga_id' });
+  if (error) throw error;
+}
+
+// ── Reservas de pista ──────────────────────────────────────────
+
+async function lpGetReservas(filtros = {}) {
+  let q = _sb
+    .from('lp_reservas')
+    .select('*, lp_partidos(id, pareja_a:lp_parejas!lp_partidos_pareja_a_id_fkey(nombre1,nombre2), pareja_b:lp_parejas!lp_partidos_pareja_b_id_fkey(nombre1,nombre2))')
+    .eq('organizador_id', LP.orgId)
+    .order('fecha')
+    .order('hora_inicio');
+  if (filtros.fecha) q = q.eq('fecha', filtros.fecha);
+  if (filtros.semana_ini) q = q.gte('fecha', filtros.semana_ini);
+  if (filtros.semana_fin) q = q.lte('fecha', filtros.semana_fin);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data || [];
+}
+
+async function lpSaveReserva(reserva) {
+  if (reserva.id) {
+    const { id, ...campos } = reserva;
+    const { data, error } = await _sb
+      .from('lp_reservas')
+      .update({ ...campos, organizador_id: LP.orgId })
+      .eq('id', id)
+      .select().single();
+    if (error) throw error;
+    return data;
+  } else {
+    const { id: _, ...sinId } = reserva;
+    const { data, error } = await _sb
+      .from('lp_reservas')
+      .insert({ ...sinId, organizador_id: LP.orgId })
+      .select().single();
+    if (error) throw error;
+    return data;
+  }
+}
+
+async function lpDeleteReserva(id) {
+  const { error } = await _sb.from('lp_reservas').delete().eq('id', id).eq('organizador_id', LP.orgId);
+  if (error) throw error;
+}
+
+// ── Publicaciones ──────────────────────────────────────────────
+
+async function lpGetPublicaciones(ligaId) {
+  const { data, error } = await _sb
+    .from('lp_publicaciones')
+    .select('*')
+    .eq('liga_id', ligaId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+async function lpSavePublicacion(pub) {
+  const { id: _, ...sinId } = pub;
+  const { data, error } = await _sb
+    .from('lp_publicaciones')
+    .insert(sinId)
+    .select().single();
+  if (error) throw error;
+  return data;
+}
+
+// ── Algoritmos ─────────────────────────────────────────────────
+
+/**
+ * Genera emparejamientos round-robin para N parejas.
+ * Devuelve array de jornadas, cada una con array de partidos [idxA, idxB].
+ * Usa algoritmo de rotación circular (Berger tables).
+ */
+function lpGenerarRoundRobin(n) {
+  const ids = Array.from({ length: n }, (_, i) => i);
+  if (n % 2 !== 0) ids.push(-1); // -1 = bye
+  const total = ids.length;
+  const jornadas = [];
+
+  for (let r = 0; r < total - 1; r++) {
+    const partidos = [];
+    for (let i = 0; i < total / 2; i++) {
+      const a = ids[i];
+      const b = ids[total - 1 - i];
+      if (a !== -1 && b !== -1) partidos.push([a, b]);
+    }
+    jornadas.push(partidos);
+    // Rotar: mantener ids[0] fijo, rotar el resto
+    ids.splice(1, 0, ids.pop());
+  }
+  return jornadas;
+}
+
+/**
+ * Genera emparejamientos americano para N jugadores.
+ * Cada jornada tiene N/4 partidos de 4 jugadores (2 parejas).
+ * Las parejas rotan para que todos jueguen con y contra todos.
+ * Devuelve array de jornadas con partidos [jugA1, jugA2, jugB1, jugB2].
+ */
+function lpGenerarAmericano(n) {
+  // n debe ser múltiplo de 4
+  if (n % 4 !== 0) return [];
+  const jornadas = [];
+  const total_jornadas = n - 1;
+
+  for (let r = 0; r < total_jornadas; r++) {
+    const partidos = [];
+    const pistas = n / 4;
+    for (let p = 0; p < pistas; p++) {
+      // Algoritmo de rotación para americano
+      const base = r * pistas + p;
+      const a1 = base % n;
+      const a2 = (base + 1) % n;
+      const b1 = (base + 2) % n;
+      const b2 = (base + 3) % n;
+      partidos.push([a1, a2, b1, b2]);
+    }
+    jornadas.push(partidos);
+  }
+  return jornadas;
+}
+
+/**
+ * Calcula clasificación de una división round-robin.
+ * @param {Array} parejas - array de objetos pareja con stats acumuladas
+ * @returns {Array} parejas ordenadas por pts, sf-sc, nombre
+ */
+function lpClasificacionRoundRobin(parejas) {
+  return [...parejas].sort((a, b) => {
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    const difA = a.sf - a.sc;
+    const difB = b.sf - b.sc;
+    if (difB !== difA) return difB - difA;
+    return a.nombre1.localeCompare(b.nombre1, 'es');
   });
-  renderNav('jugadores-liga');
-  await lpInit();
-  await cargar();
 }
 
-init();
-</script>
-</body>
-</html>
+/**
+ * Calcula clasificación americano individual.
+ * @param {Array} stats - array lp_stats_americano con datos del jugador
+ * @returns {Array} ordenado por victorias, sf-sc, jf-jc
+ */
+function lpClasificacionAmericano(stats) {
+  return [...stats].sort((a, b) => {
+    if (b.victorias !== a.victorias) return b.victorias - a.victorias;
+    const difSA = a.sf - a.sc;
+    const difSB = b.sf - b.sc;
+    if (difSB !== difSA) return difSB - difSA;
+    const difJA = a.jf - a.jc;
+    const difJB = b.jf - b.jc;
+    if (difJB !== difJA) return difJB - difJA;
+    return 0;
+  });
+}
+
+/**
+ * Recalcula stats de todas las parejas de una división round-robin
+ * a partir de los partidos jugados.
+ * Devuelve Map<pareja_id, {pj,pg,pp,sf,sc,pts}>
+ */
+function lpRecalcularStatsRR(partidos, liga) {
+  const stats = {};
+  const init = () => ({ pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, pts: 0 });
+
+  for (const p of partidos) {
+    if (p.estado !== 'jugado' && p.estado !== 'wo_a' && p.estado !== 'wo_b') continue;
+    const idA = p.pareja_a_id;
+    const idB = p.pareja_b_id;
+    if (!stats[idA]) stats[idA] = init();
+    if (!stats[idB]) stats[idB] = init();
+
+    if (p.estado === 'wo_a') {
+      // WO: ausente = pareja A
+      stats[idA].pj++; stats[idA].pp++;
+      stats[idA].pts += liga.pts_incomp_ausente ?? 0;
+      stats[idB].pj++; stats[idB].pg++;
+      stats[idB].pts += liga.pts_incomp_presente ?? 2;
+      continue;
+    }
+    if (p.estado === 'wo_b') {
+      stats[idB].pj++; stats[idB].pp++;
+      stats[idB].pts += liga.pts_incomp_ausente ?? 0;
+      stats[idA].pj++; stats[idA].pg++;
+      stats[idA].pts += liga.pts_incomp_presente ?? 2;
+      continue;
+    }
+
+    // Partido normal: contar sets
+    let sA = 0, sB = 0;
+    const sets = [[p.s1a, p.s1b], [p.s2a, p.s2b], [p.s3a, p.s3b]];
+    for (const [a, b] of sets) {
+      if (a == null || b == null) continue;
+      if (a > b) sA++; else if (b > a) sB++;
+    }
+
+    stats[idA].pj++;
+    stats[idA].sf += sA;
+    stats[idA].sc += sB;
+    stats[idB].pj++;
+    stats[idB].sf += sB;
+    stats[idB].sc += sA;
+
+    if (sA > sB) {
+      stats[idA].pg++;
+      stats[idA].pts += liga.pts_victoria ?? 2;
+      stats[idB].pp++;
+      stats[idB].pts += liga.pts_derrota ?? 1;
+    } else if (sB > sA) {
+      stats[idB].pg++;
+      stats[idB].pts += liga.pts_victoria ?? 2;
+      stats[idA].pp++;
+      stats[idA].pts += liga.pts_derrota ?? 1;
+    }
+  }
+  return stats;
+}
+
+/**
+ * Actualiza stats de parejas en Supabase tras anotar un resultado.
+ * Recalcula TODO desde cero para evitar inconsistencias.
+ */
+async function lpActualizarClasificacion(ligaId, divisionId) {
+  const [partidos, parejas, liga] = await Promise.all([
+    lpGetPartidos(ligaId, { division_id: divisionId }),
+    lpGetParejas(ligaId, { division_id: divisionId }),
+    lpGetLiga(ligaId),
+  ]);
+
+  const statsMap = lpRecalcularStatsRR(partidos, liga);
+
+  // Actualizar cada pareja en paralelo
+  await Promise.all(parejas.map(p => {
+    const s = statsMap[p.id] || { pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, pts: 0 };
+    return _sb
+      .from('lp_parejas')
+      .update({ pj: s.pj, pg: s.pg, pp: s.pp, sf: s.sf, sc: s.sc, pts: s.pts })
+      .eq('id', p.id);
+  }));
+}
+
+// ── Helpers de fecha ───────────────────────────────────────────
+
+/**
+ * Devuelve un array de semanas entre dos fechas.
+ * Cada semana: { ini: Date, fin: Date, label: string, semanaNum: int }
+ */
+function lpGetSemanas(fechaIni, fechaFin) {
+  const semanas = [];
+  let cur = new Date(fechaIni);
+  // Ajustar al lunes de la semana
+  const dia = cur.getDay();
+  cur.setDate(cur.getDate() - (dia === 0 ? 6 : dia - 1));
+
+  let num = 1;
+  while (cur <= new Date(fechaFin)) {
+    const ini = new Date(cur);
+    const fin = new Date(cur);
+    fin.setDate(fin.getDate() + 6);
+    semanas.push({
+      ini,
+      fin,
+      label: `${lpFechaCorta(ini)} – ${lpFechaCorta(fin)}`,
+      semanaNum: num++,
+    });
+    cur.setDate(cur.getDate() + 7);
+  }
+  return semanas;
+}
+
+function lpFechaCorta(d) {
+  if (!d) return '';
+  const f = typeof d === 'string' ? new Date(d + 'T00:00:00') : d;
+  return f.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+}
+
+function lpFechaLarga(d) {
+  if (!d) return '';
+  const f = typeof d === 'string' ? new Date(d + 'T00:00:00') : d;
+  return f.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'long' });
+}
+
+function lpDateToISO(d) {
+  if (!d) return null;
+  const f = typeof d === 'string' ? new Date(d + 'T00:00:00') : d;
+  return f.toISOString().slice(0, 10);
+}
