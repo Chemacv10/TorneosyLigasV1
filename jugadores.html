@@ -333,7 +333,7 @@ async function init() {
     icono: 'icons/jugadores.png', botonDerecho: null
   });
   renderNav('jugadores-liga');
-  await lpInit();
+  const ok = await lpInit(); if (!ok) return;
   await cargar();
 }
 

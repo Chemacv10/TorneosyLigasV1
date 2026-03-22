@@ -174,7 +174,7 @@ async function eliminarLiga(id, nombre) {
 async function init() {
   renderHeader({ titulo:'LigaPadel', subtitulo:'Gestion de ligas', icono:'icons/inicio-liga.png', botonDerecho:null });
   renderNav('ligas');
-  await lpInit();
+  const ok = await lpInit(); if (!ok) return;
   await lpGetOrganizador();
   showLoading('ligas-wrap');
   _ligas = await lpGetLigas();

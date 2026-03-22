@@ -1155,7 +1155,7 @@ async function cargar() {
 async function init() {
   if (!_ligaId) { window.location.href = 'index.html'; return; }
 
-  await lpInit();
+  const ok = await lpInit(); if (!ok) return;
   await cargar();
 
   renderHeader({

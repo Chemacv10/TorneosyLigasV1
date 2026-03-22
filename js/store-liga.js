@@ -16,8 +16,8 @@ const LP = {
 async function lpInit() {
   const { data: { user } } = await _sb.auth.getUser();
   if (!user) {
-    window.location.href = '../index.html';
-    return;
+    window.location.href = 'index.html';
+    return false;
   }
   LP.usuario = user;
 
@@ -36,9 +36,10 @@ async function lpInit() {
       .insert({ usuario_id: user.id, nombre: 'Mi Club' })
       .select('id')
       .single();
-    if (error) { console.error('Error creando organizador:', error); return; }
+    if (error) { console.error('Error creando organizador:', error); return false; }
     LP.orgId = newOrg.id;
   }
+  return true;
 }
 
 // ── Organizador ────────────────────────────────────────────────

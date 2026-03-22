@@ -534,7 +534,7 @@ async function crearLiga() {
 async function init() {
   renderHeader({ titulo:'LigaPádel', subtitulo:'Nueva liga', icono:'icons/ligas.png', botonDerecho:null });
   renderNav('ligas');
-  await lpInit();
+  const ok = await lpInit(); if (!ok) return;
 
   // Fecha sugerida: hoy + 1 semana a hoy + 7 meses
   const hoy = new Date();

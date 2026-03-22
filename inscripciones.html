@@ -368,16 +368,23 @@ async function init() {
   });
   renderNav('ligas');
 
-  await lpInit();
+  const ok = await lpInit();
+  if (!ok) return; // sin sesión → lpInit ya redirige a index.html
 
-  [_liga, _divisiones, _parejas, _jugadores] = await Promise.all([
-    lpGetLiga(_ligaId),
-    lpGetDivisiones(_ligaId),
-    lpGetParejas(_ligaId),
-    lpGetJugadores(),
-  ]);
-  console.log('orgId:', LP.orgId);
-  console.log('jugadores cargados:', _jugadores.length, _jugadores);
+  try {
+    [_liga, _divisiones, _parejas, _jugadores] = await Promise.all([
+      lpGetLiga(_ligaId),
+      lpGetDivisiones(_ligaId),
+      lpGetParejas(_ligaId),
+      lpGetJugadores(),
+    ]);
+  } catch(e) {
+    document.getElementById('lista-parejas').innerHTML = `
+      <div style="background:#fee2e2;border:1.5px solid #fca5a5;border-radius:12px;padding:14px;font-size:12px;font-weight:700;color:#dc2626;text-align:center">
+        Error cargando datos.<br><span style="font-weight:600;font-size:11px">${e.message || e}</span>
+      </div>`;
+    return;
+  }
 
   // Actualizar header con nombre real de la liga
   renderHeader({
