@@ -261,7 +261,7 @@ async function lpDeleteJornadasLiga(ligaId) {
 async function lpGetParejas(ligaId, filtros = {}) {
   let q = _sb
     .from('lp_parejas')
-    .select('*, lp_jugadores!lp_parejas_jugador1_id_fkey(id,nombre,apellidos,nivel), lp_jugadores!lp_parejas_jugador2_id_fkey(id,nombre,apellidos,nivel)')
+    .select('*')
     .eq('liga_id', ligaId)
     .order('nombre1');
   if (filtros.division_id) q = q.eq('division_id', filtros.division_id);
