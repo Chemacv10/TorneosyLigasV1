@@ -376,6 +376,8 @@ async function init() {
     lpGetParejas(_ligaId),
     lpGetJugadores(),
   ]);
+  console.log('orgId:', LP.orgId);
+  console.log('jugadores cargados:', _jugadores.length, _jugadores);
 
   // Actualizar header con nombre real de la liga
   renderHeader({
