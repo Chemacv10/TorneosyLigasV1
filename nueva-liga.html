@@ -83,13 +83,24 @@
             <option>Masculina</option>
             <option>Femenina</option>
             <option>Mixta</option>
-            <option>Benjamín</option>
-            <option>Alevín</option>
-            <option>Infantil</option>
-            <option>Cadete</option>
-            <option>Júnior</option>
           </select>
         </div>
+        <div class="fgrp">
+          <div class="flbl">Edad</div>
+          <select class="fsel" id="f1-categoria-edad">
+            <option value="Absoluto">Absoluto</option>
+            <option value="Benjamín">Benjamín</option>
+            <option value="Alevín">Alevín</option>
+            <option value="Infantil">Infantil</option>
+            <option value="Cadete">Cadete</option>
+            <option value="Juvenil">Juvenil</option>
+            <option value="Veteranos +35">Veteranos +35</option>
+            <option value="Veteranos +45">Veteranos +45</option>
+            <option value="Veteranos +55">Veteranos +55</option>
+          </select>
+        </div>
+      </div>
+      <div class="frow">
         <div class="fgrp">
           <div class="flbl">Temporada</div>
           <input class="finp" id="f1-temporada" placeholder="Ej: 2025/26">
@@ -454,6 +465,7 @@ async function crearLiga() {
     const liga = await lpSaveLiga({
       nombre:     document.getElementById('f1-nombre').value.trim(),
       categoria:  document.getElementById('f1-categoria').value,
+      categoria_edad: document.getElementById('f1-categoria-edad').value,
       temporada:  document.getElementById('f1-temporada').value.trim() || null,
       formato:    document.getElementById('f1-formato').value,
       sets_partido: document.getElementById('f1-sets').value,

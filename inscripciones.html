@@ -133,6 +133,13 @@
       <button class="sbtn" onclick="closeSheet('sh-pareja')">Cancelar</button>
       <button class="sbtn prim" onclick="guardarPareja()">✓ Guardar</button>
     </div>
+    <div id="confirm-pareja-wrap" style="display:none;flex-direction:column;gap:8px;margin-top:4px;background:#fef9c3;border:1.5px solid #fcd34d;border-radius:12px;padding:12px">
+      <div style="font-size:12px;font-weight:800;color:#92400e">⚠️ Pareja mixta — ¿confirmar igualmente?</div>
+      <div style="display:flex;gap:8px">
+        <button class="sbtn" style="flex:1" onclick="document.getElementById('confirm-pareja-wrap').style.display='none'">Cancelar</button>
+        <button class="sbtn prim" style="flex:1" onclick="guardarPareja(true)">Confirmar</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -149,6 +156,7 @@ let _liga       = null;
 let _divisiones = [];
 let _parejas    = [];
 let _jugadores  = [];
+let _parejaConfirmPendiente = false;
 
 // ── Render lista ──────────────────────────────────────────────
 function renderLista() {
@@ -367,7 +375,7 @@ function setCuota(n, val) {
   document.getElementById(`cuota${n}-pend`).className = 'ctog-cuota' + (val === 'pendiente' ? ' on-pend' : '');
 }
 
-async function guardarPareja() {
+async function guardarPareja(forzar = false) {
   const jug1id = document.getElementById('par-jug1-id').value;
   const jug2id = document.getElementById('par-jug2-id').value;
   if (!jug1id) { toast('Selecciona el jugador 1', 'warn'); return; }
@@ -379,6 +387,21 @@ async function guardarPareja() {
   const jug2     = _jugadores.find(j => j.id === jug2id);
   const cuota1   = document.getElementById('par-cuota1').value || 'pendiente';
   const cuota2   = document.getElementById('par-cuota2').value || 'pendiente';
+
+  // Aviso si la pareja no cuadra con la categoría de la liga
+  if (!forzar && jug1?.sexo && jug2?.sexo) {
+    let aviso = null;
+    const cat = _liga?.categoria;
+    if (cat === 'Masculina' && (jug1.sexo !== 'M' || jug2.sexo !== 'M')) aviso = 'Pareja mixta en liga Masculina';
+    if (cat === 'Femenina'  && (jug1.sexo !== 'F' || jug2.sexo !== 'F')) aviso = 'Pareja mixta en liga Femenina';
+    if (cat === 'Mixta'     && jug1.sexo === jug2.sexo)                   aviso = `Dos ${jug1.sexo === 'M' ? 'hombres' : 'mujeres'} en liga Mixta`;
+    if (aviso) {
+      toast(`⚠️ ${aviso}`, 'warn');
+      document.getElementById('confirm-pareja-wrap').style.display = 'flex';
+      return;
+    }
+  }
+  document.getElementById('confirm-pareja-wrap').style.display = 'none';
 
   // Si el jugador no está en la lista local (vino de edición), conservar nombre guardado
   const pExistente = parejaId ? _parejas.find(p => p.id === parejaId) : null;
