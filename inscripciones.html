@@ -49,6 +49,11 @@
   <nav id="nav-container"></nav>
 
   <main class="content">
+    <div class="sec" style="margin-bottom:4px">
+      <img src="icons/inscripciones.png" style="width:28px;height:28px;object-fit:contain">
+      <div class="sec-title">Inscripciones</div>
+      <div class="sec-count" id="sec-count">0</div>
+    </div>
     <div class="info-bar" id="info-cuotas">
       <div class="info-txt">Cuotas cobradas</div>
       <div class="info-val" id="info-cuotas-val">0 / 0 jugadores</div>
@@ -87,32 +92,34 @@
     <div class="jugador-bloque">
       <div class="jugador-titulo">Jugador 1</div>
       <div class="fgrp" id="jug1-wrap">
-        <div class="flbl">Buscar en el club</div>
+        <div class="flbl">Buscar jugador</div>
         <input class="finp" id="par-busq1" placeholder="Nombre del jugador..." oninput="buscarJugador(1)" autocomplete="off">
         <div class="jug-results" id="par-res1"></div>
       </div>
       <div class="fgrp">
         <div class="flbl">Cuota</div>
-        <div style="display:flex;gap:6px">
-          <button class="ctog-cuota on-ok" id="cuota1-ok"   onclick="setCuota(1,'pagada')">✓ Pagada</button>
-          <button class="ctog-cuota"       id="cuota1-pend" onclick="setCuota(1,'pendiente')">Pendiente</button>
-        </div>
+        <select class="fsel" id="par-cuota1">
+          <option value="">— Sin definir —</option>
+          <option value="pagada">✓ Pagada</option>
+          <option value="pendiente">Pendiente</option>
+        </select>
       </div>
     </div>
 
     <div class="jugador-bloque">
       <div class="jugador-titulo">Jugador 2</div>
       <div class="fgrp" id="jug2-wrap">
-        <div class="flbl">Buscar en el club</div>
+        <div class="flbl">Buscar jugador</div>
         <input class="finp" id="par-busq2" placeholder="Nombre del jugador..." oninput="buscarJugador(2)" autocomplete="off">
         <div class="jug-results" id="par-res2"></div>
       </div>
       <div class="fgrp">
         <div class="flbl">Cuota</div>
-        <div style="display:flex;gap:6px">
-          <button class="ctog-cuota"       id="cuota2-ok"   onclick="setCuota(2,'pagada')">✓ Pagada</button>
-          <button class="ctog-cuota on-pend" id="cuota2-pend" onclick="setCuota(2,'pendiente')">Pendiente</button>
-        </div>
+        <select class="fsel" id="par-cuota2">
+          <option value="">— Sin definir —</option>
+          <option value="pagada">✓ Pagada</option>
+          <option value="pendiente">Pendiente</option>
+        </select>
       </div>
     </div>
 
@@ -158,6 +165,7 @@ function renderLista() {
   const total   = _parejas.length * 2;
   const pagados = _parejas.reduce((s, p) => s + (p.cuota1 === 'pagada' ? 1 : 0) + (p.cuota2 === 'pagada' ? 1 : 0), 0);
   document.getElementById('info-cuotas-val').textContent = `${pagados} / ${total} jugadores`;
+  document.getElementById('sec-count').textContent = _parejas.length;
 
   const el = document.getElementById('lista-parejas');
 
@@ -236,7 +244,8 @@ function abrirSheet() {
   document.getElementById('par-jug1-id').value = '';
   document.getElementById('par-jug2-id').value = '';
   resetBuscador(1); resetBuscador(2);
-  setCuota(1, 'pagada'); setCuota(2, 'pendiente');
+  document.getElementById('par-cuota1').value = '';
+  document.getElementById('par-cuota2').value = '';
 
   const selDiv = document.getElementById('par-division');
   selDiv.innerHTML = _divisiones.map(d => `<option value="${d.id}">${d.nombre}</option>`).join('');
@@ -248,7 +257,7 @@ function abrirSheet() {
 function resetBuscador(n) {
   const wrap = document.getElementById(`jug${n}-wrap`);
   wrap.innerHTML = `
-    <div class="flbl">Buscar en el club</div>
+    <div class="flbl">Buscar jugador</div>
     <input class="finp" id="par-busq${n}" placeholder="Nombre del jugador..." oninput="buscarJugador(${n})" autocomplete="off">
     <div class="jug-results" id="par-res${n}"></div>`;
 }
@@ -313,8 +322,8 @@ async function guardarPareja() {
   const divId = document.getElementById('par-division').value || _divisiones[0]?.id;
   const jug1  = _jugadores.find(j => j.id === jug1id);
   const jug2  = _jugadores.find(j => j.id === jug2id);
-  const cuota1 = document.getElementById('cuota1-ok').classList.contains('on-ok') ? 'pagada' : 'pendiente';
-  const cuota2 = document.getElementById('cuota2-ok').classList.contains('on-ok') ? 'pagada' : 'pendiente';
+  const cuota1 = document.getElementById('par-cuota1').value || 'pendiente';
+  const cuota2 = document.getElementById('par-cuota2').value || 'pendiente';
 
   const pareja = {
     liga_id:     _ligaId,
@@ -348,6 +357,17 @@ async function confirmarCierre() {
 // ── Init ──────────────────────────────────────────────────────
 async function init() {
   if (!_ligaId) { window.location.href = 'index.html'; return; }
+
+  // Renderizar nav y header básico inmediatamente
+  renderHeader({
+    titulo:       'Inscripciones',
+    subtitulo:    'Cargando...',
+    icono:        'icons/inscripciones.png',
+    botonDerecho: 'back',
+    onBack:       'index.html',
+  });
+  renderNav('ligas');
+
   await lpInit();
 
   [_liga, _divisiones, _parejas, _jugadores] = await Promise.all([
@@ -357,6 +377,7 @@ async function init() {
     lpGetJugadores(),
   ]);
 
+  // Actualizar header con nombre real de la liga
   renderHeader({
     titulo:       _liga.nombre,
     subtitulo:    'Inscripciones · ' + _parejas.length + ' parejas',
@@ -364,7 +385,6 @@ async function init() {
     botonDerecho: 'back',
     onBack:       'index.html',
   });
-  renderNav('ligas');
 
   // Poblar filtro divisiones
   const selDiv = document.getElementById('filt-div');
