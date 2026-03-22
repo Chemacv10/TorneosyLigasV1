@@ -1,1 +1,1176 @@
-theme: null
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Liga — LigaPádel</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Tabs interiores */
+    .liga-tabs { display:flex; overflow-x:auto; scrollbar-width:none; border-bottom:1.5px solid var(--borde); padding:0; }
+    .liga-tabs::-webkit-scrollbar { display:none; }
+    .ltab { white-space:nowrap; padding:9px 13px; font-size:11px; font-weight:800; color:var(--sutil); cursor:pointer; border-bottom:2.5px solid transparent; margin-bottom:-1.5px; flex-shrink:0; transition:all .15s; }
+    .ltab.on { color:var(--azul); border-bottom-color:var(--azul); }
+    .ltab-content { display:none; padding:14px; }
+    .ltab-content.on { display:block; }
+
+    /* Clasificación */
+    .div-tabs { display:flex; gap:5px; overflow-x:auto; scrollbar-width:none; margin-bottom:12px; }
+    .div-tabs::-webkit-scrollbar { display:none; }
+    .div-tab { white-space:nowrap; padding:6px 13px; border-radius:100px; font-size:11px; font-weight:800; border:1.5px solid var(--borde); background:#fff; cursor:pointer; color:var(--sutil); flex-shrink:0; transition:all .12s; }
+    .div-tab.on { background:#eff6ff; border-color:#bfdbfe; color:#1e40af; }
+
+    .clas-tbl { width:100%; border-collapse:collapse; font-size:12px; }
+    .clas-tbl th { padding:6px 5px; text-align:center; font-size:10px; font-weight:900; color:var(--sutil); border-bottom:1.5px solid var(--borde); text-transform:uppercase; }
+    .clas-tbl th:nth-child(2) { text-align:left; }
+    .clas-tbl td { padding:7px 5px; border-bottom:1px solid #f8fafc; text-align:center; font-weight:700; color:var(--texto); }
+    .clas-tbl td:nth-child(2) { text-align:left; }
+    .clas-tbl tr:last-child td { border-bottom:none; }
+    .pos { width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:9px; font-weight:900; }
+    .p1{background:#fef9c3;color:#854d0e} .p2{background:#f1f5f9;color:#64748b} .p3{background:#fed7aa;color:#92400e}
+    .asc-dir { background:#f0fdf4; }
+    .asc-pof { background:#fffbeb; }
+    .desc-row { background:#fff5f5; }
+    .asc-txt { color:#15803d; font-weight:800; }
+    .desc-txt { color:#dc2626; font-weight:800; }
+
+    /* Partidos */
+    .partido-card { background:#f8fafc; border-radius:12px; padding:10px 13px; margin-bottom:7px; border:1px solid #f1f5f9; }
+    .partido-hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:7px; font-size:10px; color:var(--sutil); font-weight:700; }
+    .partido-equipos { display:flex; align-items:center; gap:6px; }
+    .partido-nombre { flex:1; font-size:12px; font-weight:800; color:var(--texto); }
+    .partido-score { font-size:11px; font-weight:800; padding:3px 9px; border-radius:100px; white-space:nowrap; }
+    .ps-pend { background:#f1f5f9; color:var(--sutil); }
+    .ps-win  { background:#dcfce7; color:#15803d; }
+    .ps-blue { background:#dbeafe; color:#1e40af; }
+    .ps-wo   { background:#fee2e2; color:#dc2626; }
+
+    /* Participantes */
+    .par-row { display:flex; align-items:center; gap:9px; padding:9px 0; border-bottom:1px solid #f8fafc; }
+    .par-row:last-child { border-bottom:none; }
+    .par-av { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; flex-shrink:0; }
+    .par-info { flex:1; min-width:0; }
+    .par-nombre { font-size:12px; font-weight:800; color:var(--texto); }
+    .par-meta { font-size:10px; color:var(--sutil); font-weight:600; margin-top:1px; }
+    .cuota-ok   { background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:100px; font-size:10px; font-weight:800; }
+    .cuota-pend { background:#fee2e2; color:#dc2626; padding:2px 8px; border-radius:100px; font-size:10px; font-weight:800; }
+    .cuota-parc { background:#fef9c3; color:#92400e; padding:2px 8px; border-radius:100px; font-size:10px; font-weight:800; }
+
+    /* Material */
+    .material-check { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #f8fafc; }
+    .material-check:last-child { border-bottom:none; }
+    .mat-chk { width:20px; height:20px; flex-shrink:0; accent-color:var(--verde); cursor:pointer; }
+    .mat-lbl { flex:1; font-size:12px; font-weight:700; color:var(--texto); }
+    .mat-ok  { color:var(--verde); text-decoration:line-through; opacity:.6; }
+
+    /* Publicación */
+    .pub-preview { background:#1e3a8a; border-radius:12px; padding:14px; margin-bottom:12px; }
+    .pub-prev-title { font-size:14px; font-weight:900; color:#fff; text-align:center; }
+    .pub-prev-sub   { font-size:10px; color:#93c5fd; font-weight:700; text-align:center; margin-top:3px; margin-bottom:12px; }
+    .pub-tbl { width:100%; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; font-size:11px; }
+    .pub-tbl th { background:#2563eb; color:#fff; padding:5px 7px; font-size:9px; font-weight:900; text-transform:uppercase; }
+    .pub-tbl th:not(:nth-child(2)) { text-align:center; }
+    .pub-tbl td { padding:6px 7px; border-bottom:1px solid #f1f5f9; color:#1e293b; font-weight:700; }
+    .pub-tbl td:not(:nth-child(2)) { text-align:center; }
+    .pub-tbl tr:last-child td { border-bottom:none; }
+    .res-pub { background:#fff; border-radius:8px; padding:7px 10px; margin-top:5px; display:flex; justify-content:space-between; font-size:10px; color:#1e293b; font-weight:700; border:1px solid #e2e8f0; }
+
+    /* Leyenda */
+    .leyenda { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px; }
+    /* Cuota toggle en sheet */
+    .ctog-cuota { flex:1; padding:8px; border-radius:10px; border:1.5px solid var(--borde); background:#fff; font-family:Nunito,sans-serif; font-size:11px; font-weight:800; cursor:pointer; color:var(--sutil); }
+    .ctog-cuota.on-ok   { background:#dcfce7; border-color:#86efac; color:#15803d; }
+    .ctog-cuota.on-pend { background:#fee2e2; border-color:#fca5a5; color:#dc2626; }
+
+    /* Pareja card compacta */
+    .par-card-new { background:var(--card); border-radius:14px; border:1.5px solid var(--borde); padding:10px 12px; box-shadow:0 1px 4px rgba(0,0,0,.05); display:flex; gap:8px; align-items:center; margin-bottom:6px; }
+    .par-jugadores { flex:1; display:flex; flex-direction:column; gap:6px; }
+    .par-row-new { display:flex; align-items:center; gap:8px; }
+    .par-av-sm { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; flex-shrink:0; color:#fff; }
+    .par-del-btn { background:none; border:none; color:var(--sutil); font-size:15px; cursor:pointer; padding:4px 6px; border-radius:8px; flex-shrink:0; align-self:center; }
+    .par-del-btn:hover { background:#fee2e2; color:var(--rojo); }
+    .cuota-tog-sm { padding:3px 9px; border-radius:100px; font-size:10px; font-weight:800; border:none; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+    .cok  { background:#dcfce7; color:#15803d; }
+    .cpend { background:#fee2e2; color:#dc2626; }
+    .div-sec-label { font-size:10px; font-weight:900; color:var(--sutil); text-transform:uppercase; letter-spacing:.5px; margin:8px 0 5px; padding-left:2px; }
+
+    .ley-item { display:flex; align-items:center; gap:4px; font-size:10px; font-weight:700; color:var(--sutil); }
+    .ley-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div id="header-container"></div>
+  <nav id="nav-container"></nav>
+
+  <!-- Tabs -->
+  <div class="liga-tabs" id="liga-tabs">
+    <div class="ltab on"  onclick="showTab('clasificacion')">Clasificación</div>
+    <div class="ltab"     onclick="showTab('participantes')">Jugadores</div>
+    <div class="ltab"     onclick="showTab('calendario')">Calendario</div>
+    <div class="ltab"     onclick="showTab('resultados')">Resultados</div>
+    <div class="ltab"     onclick="showTab('material')">Material</div>
+    <div class="ltab"     onclick="showTab('publicacion')">Publicar</div>
+    <div class="ltab"     onclick="showTab('normativa')">Normativa</div>
+  </div>
+
+  <main style="overflow-y:auto;flex:1;padding-bottom:80px">
+
+    <!-- ══ CLASIFICACIÓN ══ -->
+    <div class="ltab-content on" id="tab-clasificacion">
+      <div class="div-tabs" id="div-tabs-clas"></div>
+      <div class="leyenda">
+        <div class="ley-item"><div class="ley-dot" style="background:#16a34a"></div>Asciende directo</div>
+        <div class="ley-item"><div class="ley-dot" style="background:#f59e0b"></div>Play-off</div>
+        <div class="ley-item"><div class="ley-dot" style="background:#dc2626"></div>Desciende</div>
+      </div>
+      <div id="tabla-clasificacion"></div>
+    </div>
+
+    <!-- ══ PARTICIPANTES ══ -->
+    <div class="ltab-content" id="tab-participantes">
+      <div id="info-cuotas-bar" style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:#1e40af">Cuotas cobradas</div>
+        <div style="font-size:13px;font-weight:900;color:var(--azul)" id="info-cuotas-val">0 / 0 jugadores</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <select class="fsel" id="filt-div-par" onchange="renderParticipantes()">
+          <option value="">Todas las divisiones</option>
+        </select>
+        <select class="fsel" id="filt-cuota" onchange="renderParticipantes()">
+          <option value="">Todas las cuotas</option>
+          <option value="pagada">Pagadas</option>
+          <option value="pendiente">Pendientes</option>
+        </select>
+      </div>
+      <div id="lista-participantes"></div>
+      <div id="btn-generar-wrap" style="display:none;margin-top:10px">
+        <button class="btn pr" style="width:100%;padding:13px;font-size:14px" onclick="confirmarGenerarCalendario()">✓ Cerrar inscripción y generar liga</button>
+      </div>
+    </div>
+
+    <!-- ══ CALENDARIO ══ -->
+    <div class="ltab-content" id="tab-calendario">
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="btn sm" onclick="exportarCalendarioPDF()">PDF</button>
+        <button class="btn sm" style="background:#25d366;border-color:#25d366;color:#fff" onclick="compartirCalendarioWA()">WhatsApp</button>
+        <button class="btn sm" onclick="showTab('resultados')">Anotar resultado</button>
+      </div>
+      <div id="lista-jornadas"></div>
+    </div>
+
+    <!-- ══ RESULTADOS ══ -->
+    <div class="ltab-content" id="tab-resultados">
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <div style="flex:1">
+          <div class="filter-label">Jornada</div>
+          <select class="fsel" id="filt-jornada-res" onchange="renderResultados()">
+            <option value="">Todas</option>
+          </select>
+        </div>
+        <div style="flex:1">
+          <div class="filter-label">Estado</div>
+          <select class="fsel" id="filt-estado-res" onchange="renderResultados()">
+            <option value="">Todos</option>
+            <option value="pendiente">Pendientes</option>
+            <option value="jugado">Jugados</option>
+          </select>
+        </div>
+      </div>
+      <div id="lista-resultados"></div>
+    </div>
+
+    <!-- ══ MATERIAL ══ -->
+    <div class="ltab-content" id="tab-material">
+      <div style="font-size:12px;font-weight:600;color:var(--sutil);margin-bottom:14px;line-height:1.5" id="material-desc">
+        Control de entrega de material por jugador/pareja.
+      </div>
+      <div id="lista-material"></div>
+    </div>
+
+    <!-- ══ PUBLICAR ══ -->
+    <div class="ltab-content" id="tab-publicacion">
+      <div class="frow" style="margin-bottom:12px">
+        <div class="fgrp">
+          <div class="flbl">Título</div>
+          <input class="finp" id="pub-titulo" style="font-size:12px" placeholder="Ej: Jornada 5">
+        </div>
+        <div class="fgrp">
+          <div class="flbl">División</div>
+          <select class="fsel" id="pub-division" style="font-size:12px" onchange="renderPreviewPublicacion()">
+            <option value="">Todas</option>
+          </select>
+        </div>
+      </div>
+      <div style="font-size:10px;font-weight:900;color:var(--sutil);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Vista previa</div>
+      <div class="pub-preview" id="pub-preview-wrap">
+        <div class="pub-prev-title" id="pub-prev-nombre">—</div>
+        <div class="pub-prev-sub"   id="pub-prev-sub">—</div>
+        <div style="font-size:10px;font-weight:900;color:#fff;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px">Clasificación:</div>
+        <table class="pub-tbl" id="pub-prev-tbl">
+          <thead><tr><th style="width:22px">#</th><th>Jugador/Pareja</th><th>PTS</th><th>G</th><th>P</th></tr></thead>
+          <tbody id="pub-prev-tbody"></tbody>
+        </table>
+        <div style="font-size:10px;font-weight:900;color:#fff;margin:10px 0 5px;text-transform:uppercase;letter-spacing:.4px">Resultados recientes:</div>
+        <div id="pub-prev-resultados"></div>
+        <div style="font-size:9px;color:#93c5fd;text-align:center;margin-top:8px;font-weight:700">Powered by LigaPádel</div>
+      </div>
+      <button class="btn" style="width:100%;background:#25d366;border-color:#25d366;color:#fff;margin-bottom:7px" onclick="compartirWA()">📱 Compartir por WhatsApp</button>
+      <button class="btn pr" style="width:100%" onclick="descargarImagenPDF()">⬇️ Descargar imagen + PDF</button>
+    </div>
+
+    <!-- ══ NORMATIVA ══ -->
+    <div class="ltab-content" id="tab-normativa">
+      <div class="fgrp"><div class="flbl">Título</div><input class="finp" id="norm-titulo" placeholder="Normativa de la liga"></div>
+      <div class="fgrp"><div class="flbl">Horario de juego</div><input class="finp" id="norm-horario" placeholder="Vie 17-22h · Sáb 10-21h · Dom 10-21h"></div>
+      <div class="frow">
+        <div class="fgrp"><div class="flbl">Aplazamientos máx.</div><input class="finp" id="norm-aplaz" type="number" value="5"></div>
+        <div class="fgrp"><div class="flbl">WO tras (min)</div><input class="finp" id="norm-wo" type="number" value="15"></div>
+      </div>
+      <div class="fgrp"><div class="flbl">Texto libre</div><textarea class="finp" id="norm-texto" rows="6" style="resize:none;line-height:1.5"></textarea></div>
+      <button class="btn pr" style="width:100%;margin-top:4px" onclick="guardarNormativa()">Guardar normativa</button>
+
+      <div style="margin-top:16px">
+        <div style="font-size:10px;font-weight:900;color:var(--sutil);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Página pública</div>
+        <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:10px 13px;font-size:11px;font-weight:800;color:#1e40af;margin-bottom:8px;word-break:break-all" id="url-publica-display">—</div>
+        <button class="btn" style="width:100%;margin-bottom:7px" onclick="copiarUrlPublica()">Copiar enlace</button>
+        <button class="btn" style="width:100%;background:#25d366;border-color:#25d366;color:#fff" onclick="compartirUrlWA()">📱 Compartir por WhatsApp</button>
+      </div>
+    </div>
+
+  </main>
+
+  <button class="fab" id="fab-btn" onclick="onFabClick()">+</button>
+
+</div>
+
+<!-- Sheet anotar resultado -->
+<div class="overlay" id="sh-resultado">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Anotar resultado</div>
+    <input type="hidden" id="res-partido-id">
+    <div style="background:#f8fafc;border-radius:10px;padding:9px 12px;margin-bottom:12px;font-size:12px;font-weight:800;color:var(--texto);text-align:center" id="res-partido-label">—</div>
+
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:end;margin-bottom:8px">
+      <div><div class="flbl">Set 1 — A</div><input class="finp" id="res-s1a" type="number" min="0" max="7" style="text-align:center;font-size:20px;font-weight:900"></div>
+      <div style="padding-bottom:8px;font-size:18px;font-weight:900;color:var(--sutil);text-align:center">–</div>
+      <div><div class="flbl">Set 1 — B</div><input class="finp" id="res-s1b" type="number" min="0" max="7" style="text-align:center;font-size:20px;font-weight:900"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:end;margin-bottom:8px">
+      <div><div class="flbl">Set 2 — A</div><input class="finp" id="res-s2a" type="number" min="0" max="7" style="text-align:center;font-size:20px;font-weight:900"></div>
+      <div style="padding-bottom:8px;font-size:18px;font-weight:900;color:var(--sutil);text-align:center">–</div>
+      <div><div class="flbl">Set 2 — B</div><input class="finp" id="res-s2b" type="number" min="0" max="7" style="text-align:center;font-size:20px;font-weight:900"></div>
+    </div>
+    <div id="set3-wrap" style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:end;margin-bottom:8px">
+      <div><div class="flbl" id="set3-lbl">STB — A</div><input class="finp" id="res-s3a" type="number" min="0" style="text-align:center;font-size:20px;font-weight:900"></div>
+      <div style="padding-bottom:8px;font-size:18px;font-weight:900;color:var(--sutil);text-align:center">–</div>
+      <div><div class="flbl" id="set3-lbl-b">STB — B</div><input class="finp" id="res-s3b" type="number" min="0" style="text-align:center;font-size:20px;font-weight:900"></div>
+    </div>
+
+    <div class="fgrp">
+      <div class="flbl">Resultado especial</div>
+      <select class="fsel" id="res-especial" onchange="onEspecial()">
+        <option value="">Normal</option>
+        <option value="wo_a">WO — No se presentó pareja A</option>
+        <option value="wo_b">WO — No se presentó pareja B</option>
+        <option value="aplazado">Aplazado</option>
+      </select>
+    </div>
+    <div class="fgrp">
+      <div class="flbl">Notas (opcional)</div>
+      <input class="finp" id="res-notas" placeholder="Ej: aplazado por lluvia">
+    </div>
+
+    <div id="res-preview" style="background:#dcfce7;border-radius:10px;padding:9px 13px;font-size:12px;font-weight:800;color:#15803d;margin-bottom:10px;display:none"></div>
+
+    <div class="sheet-btns">
+      <button class="sbtn" onclick="closeSheet('sh-resultado')">Cancelar</button>
+      <button class="sbtn prim" onclick="guardarResultado()">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet pareja -->
+<div class="overlay" id="sh-pareja">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="sh-par-titulo">Añadir pareja</div>
+    <input type="hidden" id="par-id">
+    <input type="hidden" id="par-jug1-id">
+    <input type="hidden" id="par-jug2-id">
+
+    <!-- Jugador 1 -->
+    <div style="background:#f8fafc;border-radius:12px;padding:12px;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:900;color:var(--sutil);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">Jugador 1</div>
+      <div class="fgrp" id="jug1-wrap">
+        <div class="flbl">Buscar en el club</div>
+        <input class="finp" id="par-busq1" placeholder="Nombre del jugador..." oninput="buscarJugador(1)" autocomplete="off">
+        <div id="par-res1" style="background:#fff;border:1.5px solid var(--borde);border-radius:12px;margin-top:4px;display:none"></div>
+      </div>
+      <div class="fgrp">
+        <div class="flbl">Cuota</div>
+        <div style="display:flex;gap:6px">
+          <button class="ctog-cuota on-ok" id="cuota1-ok" onclick="setCuota(1,'pagada')">✓ Pagada</button>
+          <button class="ctog-cuota" id="cuota1-pend" onclick="setCuota(1,'pendiente')">Pendiente</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Jugador 2 -->
+    <div style="background:#f8fafc;border-radius:12px;padding:12px;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:900;color:var(--sutil);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">Jugador 2</div>
+      <div class="fgrp" id="jug2-wrap">
+        <div class="flbl">Buscar en el club</div>
+        <input class="finp" id="par-busq2" placeholder="Nombre del jugador..." oninput="buscarJugador(2)" autocomplete="off">
+        <div id="par-res2" style="background:#fff;border:1.5px solid var(--borde);border-radius:12px;margin-top:4px;display:none"></div>
+      </div>
+      <div class="fgrp">
+        <div class="flbl">Cuota</div>
+        <div style="display:flex;gap:6px">
+          <button class="ctog-cuota" id="cuota2-ok" onclick="setCuota(2,'pagada')">✓ Pagada</button>
+          <button class="ctog-cuota on-pend" id="cuota2-pend" onclick="setCuota(2,'pendiente')">Pendiente</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="fgrp" id="fgrp-division">
+      <div class="flbl">División</div>
+      <select class="fsel" id="par-division"></select>
+    </div>
+
+    <div class="sheet-btns">
+      <button class="sbtn" onclick="closeSheet('sh-pareja')">Cancelar</button>
+      <button class="sbtn prim" onclick="guardarPareja()">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-titulo" id="confirm-titulo">¿Confirmar?</div>
+    <div class="confirm-texto" id="confirm-texto"></div>
+    <div class="confirm-btns">
+      <button class="cbtn" onclick="document.getElementById('confirm-overlay').classList.remove('open')">Cancelar</button>
+      <button class="cbtn danger" id="confirm-ok">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/store-liga.js"></script>
+<script src="js/ui.js"></script>
+<script>
+
+const params   = new URLSearchParams(location.search);
+const _ligaId  = params.get('id');
+const _tabIni  = params.get('tab') || 'clasificacion';
+
+let _liga       = null;
+let _divisiones = [];
+let _parejas    = [];
+let _partidos   = [];
+let _jornadas   = [];
+let _jugadores  = [];
+let _normativa  = null;
+let _divActual  = null;   // id de la división seleccionada en clasificación
+let _partidoSel = null;   // partido abierto en sheet resultado
+
+// ── Tabs ──────────────────────────────────────────────────────
+function showTab(tab) {
+  document.querySelectorAll('.ltab').forEach((t, i) => {
+    const ids = ['clasificacion','participantes','calendario','resultados','material','publicacion','normativa'];
+    t.classList.toggle('on', ids[i] === tab);
+  });
+  document.querySelectorAll('.ltab-content').forEach(c => c.classList.remove('on'));
+  document.getElementById('tab-' + tab)?.classList.add('on');
+
+  // FAB contextual
+  const fabMap = { participantes: true, resultados: true };
+  document.getElementById('fab-btn').style.display = fabMap[tab] ? 'flex' : 'none';
+
+  if (tab === 'clasificacion') renderClasificacion();
+  if (tab === 'participantes') renderParticipantes();
+  if (tab === 'calendario')    renderCalendario();
+  if (tab === 'resultados')    renderResultados();
+  if (tab === 'material')      renderMaterial();
+  if (tab === 'publicacion')   renderPreviewPublicacion();
+  if (tab === 'normativa')     renderNormativa();
+}
+
+function onFabClick() {
+  const tabOn = document.querySelector('.ltab.on')?.textContent;
+  if (tabOn === 'Jugadores') abrirSheetPareja(null);
+  if (tabOn === 'Resultados') abrirSiguienteResultado();
+}
+
+// ── Clasificación ─────────────────────────────────────────────
+function renderClasificacion() {
+  // Tabs divisiones
+  const tabsEl = document.getElementById('div-tabs-clas');
+  tabsEl.innerHTML = _divisiones.map(d =>
+    `<div class="div-tab ${d.id===_divActual?'on':''}" onclick="setDivision('${d.id}')">${d.nombre}</div>`
+  ).join('');
+  if (!_divActual && _divisiones.length) _divActual = _divisiones[0].id;
+  renderTablaDivision(_divActual);
+}
+
+function setDivision(divId) {
+  _divActual = divId;
+  renderClasificacion();
+}
+
+function renderTablaDivision(divId) {
+  const el   = document.getElementById('tabla-clasificacion');
+  const div  = _divisiones.find(d => d.id === divId);
+  if (!div)  { el.innerHTML = ''; return; }
+
+  const parejas = _parejas
+    .filter(p => p.division_id === divId)
+    .sort((a, b) => {
+      if (b.pts !== a.pts) return b.pts - a.pts;
+      if ((b.sf-b.sc) !== (a.sf-a.sc)) return (b.sf-b.sc)-(a.sf-a.sc);
+      return (a.nombre1||'').localeCompare(b.nombre1||'', 'es');
+    });
+
+  if (!parejas.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;font-size:12px;color:var(--sutil);font-weight:700">Sin parejas en esta división</div>';
+    return;
+  }
+
+  const es_americano = _liga.formato === 'americano';
+  const n = parejas.length;
+
+  el.innerHTML = `
+    <div style="background:#f8fafc;border-radius:12px;padding:8px;border:1px solid #f1f5f9">
+    <table class="clas-tbl">
+      <thead>
+        <tr>
+          <th style="width:24px">#</th>
+          <th>Pareja</th>
+          <th>PTS</th>
+          <th>G</th>
+          <th>P</th>
+          <th>SF</th>
+          <th>SC</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${parejas.map((p, i) => {
+          const pos = i + 1;
+          const posCls = pos===1?'p1':pos===2?'p2':pos===3?'p3':'p2';
+          let rowCls = '';
+          let estadoBadge = '';
+          if (pos <= div.ascienden_directo) {
+            rowCls = 'asc-dir';
+          } else if (pos <= div.ascienden_directo + div.ascienden_playoff) {
+            rowCls = 'asc-pof';
+          } else if (pos > n - div.descienden) {
+            rowCls = 'desc-row';
+          }
+          const nombre = p.nombre2 ? `${p.nombre1} / ${p.nombre2}` : p.nombre1;
+          return `<tr class="${rowCls}">
+            <td><span class="pos ${posCls}">${pos}</span></td>
+            <td style="font-weight:${pos<=3?'800':'700'}">${nombre}</td>
+            <td style="font-weight:900;color:var(--azul)">${p.pts}</td>
+            <td style="color:var(--verde);font-weight:800">${p.pg}</td>
+            <td>${p.pp}</td>
+            <td>${p.sf}</td>
+            <td>${p.sc}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    </div>
+    <div style="font-size:9px;color:var(--sutil);margin-top:5px;font-weight:700;text-align:center">
+      ${div.ascienden_directo > 0 ? `Ascienden directo: ${div.ascienden_directo} primeros · ` : ''}
+      ${div.ascienden_playoff > 0 ? `Play-off: ${div.ascienden_playoff + div.ascienden_directo}º · ` : ''}
+      ${div.descienden > 0 ? `Descienden: últimos ${div.descienden}` : ''}
+    </div>`;
+}
+
+// ── Participantes ─────────────────────────────────────────────
+function renderParticipantes() {
+  const filtDiv   = document.getElementById('filt-div-par').value;
+  const filtCuota = document.getElementById('filt-cuota').value;
+
+  // Rellenar filtro divisiones
+  const selDiv = document.getElementById('filt-div-par');
+  if (selDiv.options.length <= 1) {
+    _divisiones.forEach(d => {
+      if (![...selDiv.options].some(o => o.value === d.id)) {
+        selDiv.innerHTML += `<option value="${d.id}">${d.nombre}</option>`;
+      }
+    });
+  }
+
+  let lista = _parejas.filter(p => {
+    if (filtDiv && p.division_id !== filtDiv) return false;
+    if (filtCuota === 'pagada'    && (p.cuota1 !== 'pagada' || p.cuota2 !== 'pagada')) return false;
+    if (filtCuota === 'pendiente' && p.cuota1 !== 'pendiente' && p.cuota2 !== 'pendiente') return false;
+    return true;
+  }).sort((a,b) => (a.nombre1||'').localeCompare(b.nombre1||'', 'es'));
+
+  // Info cuotas
+  const total = _parejas.length * 2;
+  const pagados = _parejas.reduce((s,p) => s + (p.cuota1==='pagada'?1:0) + (p.cuota2==='pagada'?1:0), 0);
+  document.getElementById('info-cuotas-val').textContent = `${pagados} / ${total} jugadores`;
+
+  const el = document.getElementById('lista-participantes');
+  if (!lista.length) {
+    el.innerHTML = '<div style="text-align:center;padding:30px 20px;font-size:12px;color:var(--sutil);font-weight:700">Sin participantes todavía.<br>Pulsa + para añadir.</div>';
+  } else {
+    // Agrupar por división
+    const porDiv = {};
+    lista.forEach(p => {
+      const divId = p.division_id || '_sin';
+      if (!porDiv[divId]) porDiv[divId] = [];
+      porDiv[divId].push(p);
+    });
+    let html = '';
+    Object.keys(porDiv).forEach(divId => {
+      const div = _divisiones.find(d => d.id === divId);
+      if (_divisiones.length > 1) html += `<div class="div-sec-label">${div?.nombre || 'Sin división'}</div>`;
+      porDiv[divId].forEach(p => {
+        const ini1 = ((p.nombre1||'?')[0]).toUpperCase();
+        const ini2 = ((p.nombre2||'?')[0]).toUpperCase();
+        const bg1  = colorAvatar(p.nombre1||'');
+        const bg2  = colorAvatar(p.nombre2||'A');
+        const c1ok = (p.cuota1||'pendiente') === 'pagada';
+        const c2ok = (p.cuota2||'pendiente') === 'pagada';
+        html += `<div class="par-card-new">
+          <div class="par-jugadores">
+            <div class="par-row-new">
+              <div class="par-av-sm" style="background:${bg1}">${ini1}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:800;color:var(--texto);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nombre1||'—'}</div>
+              </div>
+              <button class="cuota-tog-sm ${c1ok?'cok':'cpend'}" onclick="toggleCuotaPareja('${p.id}',1)">${c1ok?'✓ Pagada':'Pendiente'}</button>
+            </div>
+            <div class="par-row-new">
+              <div class="par-av-sm" style="background:${bg2}">${ini2}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:800;color:var(--texto);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nombre2||'—'}</div>
+              </div>
+              <button class="cuota-tog-sm ${c2ok?'cok':'cpend'}" onclick="toggleCuotaPareja('${p.id}',2)">${c2ok?'✓ Pagada':'Pendiente'}</button>
+            </div>
+          </div>
+          <button class="par-del-btn" onclick="eliminarPareja('${p.id}')">✕</button>
+        </div>`;
+      });
+    });
+    el.innerHTML = html;
+  }
+
+  // Botón cerrar inscripción
+  document.getElementById('btn-generar-wrap').style.display =
+    (_liga.estado === 'inscripcion' && _parejas.length >= 2) ? 'block' : 'none';
+}
+
+async function toggleCuotaPareja(id, n) {
+  const p = _parejas.find(x => x.id === id);
+  if (!p) return;
+  const campo = n === 1 ? 'cuota1' : 'cuota2';
+  p[campo] = (p[campo] === 'pagada') ? 'pendiente' : 'pagada';
+  await lpSavePareja(p);
+  renderParticipantes();
+}
+
+async function eliminarPareja(id) {
+  if (!confirm('¿Eliminar esta pareja?')) return;
+  await lpDeletePareja(id);
+  _parejas = _parejas.filter(p => p.id !== id);
+  renderParticipantes();
+  toast('Pareja eliminada');
+}
+
+// ── Calendario ────────────────────────────────────────────────
+function renderCalendario() {
+  const el = document.getElementById('lista-jornadas');
+  if (!_jornadas.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;font-size:12px;color:var(--sutil);font-weight:700">Sin jornadas. Genera el calendario cerrando la inscripción.</div>';
+    return;
+  }
+  el.innerHTML = _jornadas.map(j => {
+    const pj = _partidos.filter(p => p.jornada_id === j.id);
+    const jugados  = pj.filter(p => p.estado === 'jugado' || p.estado.startsWith('wo')).length;
+    const pendientes = pj.filter(p => p.estado === 'pendiente').length;
+    const tipoLabel = j.tipo === 'recuperacion' ? '🔄 Recuperación' : `${j.numero}ª Jornada`;
+    const borde = j.estado === 'en_curso' ? 'border-left:3px solid var(--azul);border-radius:0 14px 14px 0' : '';
+    const badgeCls = j.estado === 'en_curso' ? 'bd-b' : j.estado === 'completada' ? 'bd-g' : 'bd-gr';
+    const badgeTxt = j.estado === 'en_curso' ? 'En curso' : j.estado === 'completada' ? 'Completada' : 'Pendiente';
+
+    return `<div class="card" style="${borde}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:13px;font-weight:900;color:var(--texto)">${tipoLabel}</div>
+        <span class="badge ${badgeCls}">${badgeTxt}</span>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--sutil);margin-bottom:8px">
+        ${j.fecha_ini ? lpFechaCorta(j.fecha_ini) + ' – ' + lpFechaCorta(j.fecha_fin) : 'Sin fecha'}
+        · ${jugados}/${pj.length} partidos
+      </div>
+      ${pj.slice(0,3).map(p => {
+        const pa = p.pareja_a?.nombre1 || '—';
+        const pb = p.pareja_b?.nombre1 || '—';
+        const score = p.estado === 'jugado'
+          ? `<span class="partido-score ps-win">${formatScore(p)}</span>`
+          : p.estado.startsWith('wo')
+            ? `<span class="partido-score ps-wo">WO</span>`
+            : `<span class="partido-score ps-pend">Pendiente</span>`;
+        return `<div class="partido-card" style="margin-bottom:5px">
+          <div class="partido-equipos">
+            <span class="partido-nombre ${p.ganador==='a'?'asc-txt':''}">${pa}</span>
+            ${score}
+            <span class="partido-nombre" style="text-align:right;${p.ganador==='b'?'color:var(--verde);font-weight:900':''}">${pb}</span>
+          </div>
+        </div>`;
+      }).join('')}
+      ${pj.length > 3 ? `<div style="font-size:10px;color:var(--sutil);text-align:center;font-weight:700">+${pj.length-3} partidos más</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── Resultados ────────────────────────────────────────────────
+function renderResultados() {
+  const fJ = document.getElementById('filt-jornada-res').value;
+  const fE = document.getElementById('filt-estado-res').value;
+
+  let lista = _partidos.filter(p => {
+    if (fJ && p.jornada_id !== fJ) return false;
+    if (fE && p.estado !== fE) return false;
+    return true;
+  });
+
+  const el = document.getElementById('lista-resultados');
+  if (!lista.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;font-size:12px;color:var(--sutil);font-weight:700">Sin partidos con ese filtro</div>';
+    return;
+  }
+
+  el.innerHTML = lista.map(p => {
+    const jornada = _jornadas.find(j => j.id === p.jornada_id);
+    const pa = p.pareja_a?.nombre1 || '—';
+    const pb = p.pareja_b?.nombre1 || '—';
+    const jugado = p.estado === 'jugado' || p.estado.startsWith('wo');
+    const score  = jugado ? formatScore(p) : 'Pendiente';
+    const scoreCls = p.estado === 'jugado' ? 'ps-win' : p.estado.startsWith('wo') ? 'ps-wo' : 'ps-pend';
+
+    return `<div class="partido-card" onclick="abrirResultado('${p.id}')">
+      <div class="partido-hdr">
+        <span>${jornada ? (jornada.tipo==='recuperacion'?'Recuperación':'J'+jornada.numero) : '—'}</span>
+        ${p.fecha_sugerida ? `<span>${lpFechaCorta(p.fecha_sugerida)}</span>` : ''}
+        <span class="badge ${jugado?'bd-g':'bd-gr'}">${jugado?'Jugado':'Pendiente'}</span>
+      </div>
+      <div class="partido-equipos">
+        <span class="partido-nombre ${p.ganador==='a'?'asc-txt':''}">${pa}</span>
+        <span class="partido-score ${scoreCls}">${score}</span>
+        <span class="partido-nombre" style="text-align:right;${p.ganador==='b'?'color:var(--verde);font-weight:900':''}">${pb}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function formatScore(p) {
+  if (!p || p.estado.startsWith('wo')) return 'WO';
+  const sets = [];
+  if (p.s1a != null && p.s1b != null) sets.push(`${p.s1a}/${p.s1b}`);
+  if (p.s2a != null && p.s2b != null) sets.push(`${p.s2a}/${p.s2b}`);
+  if (p.s3a != null && p.s3b != null) sets.push(`${p.s3a}/${p.s3b}`);
+  return sets.join(' · ') || '—';
+}
+
+// ── Anotar resultado ──────────────────────────────────────────
+function abrirResultado(partidoId) {
+  _partidoSel = _partidos.find(p => p.id === partidoId);
+  if (!_partidoSel) return;
+
+  const pa = _partidoSel.pareja_a?.nombre1 || '—';
+  const pb = _partidoSel.pareja_b?.nombre1 || '—';
+  document.getElementById('res-partido-id').value    = _partidoSel.id;
+  document.getElementById('res-partido-label').textContent = `${pa}  vs  ${pb}`;
+
+  // Rellenar con resultado existente si hay
+  document.getElementById('res-s1a').value = _partidoSel.s1a ?? '';
+  document.getElementById('res-s1b').value = _partidoSel.s1b ?? '';
+  document.getElementById('res-s2a').value = _partidoSel.s2a ?? '';
+  document.getElementById('res-s2b').value = _partidoSel.s2b ?? '';
+  document.getElementById('res-s3a').value = _partidoSel.s3a ?? '';
+  document.getElementById('res-s3b').value = _partidoSel.s3b ?? '';
+  document.getElementById('res-especial').value = ['wo_a','wo_b','aplazado'].includes(_partidoSel.estado) ? _partidoSel.estado : '';
+  document.getElementById('res-notas').value = _partidoSel.notas || '';
+
+  // Label set 3 según formato
+  const esStb = _liga.sets_partido === 'mejor_3_stb';
+  document.getElementById('set3-lbl').textContent   = esStb ? 'STB — A' : 'Set 3 — A';
+  document.getElementById('set3-lbl-b').textContent = esStb ? 'STB — B' : 'Set 3 — B';
+
+  document.getElementById('res-preview').style.display = 'none';
+  openSheet('sh-resultado');
+
+  // Preview automático al cambiar scores
+  ['res-s1a','res-s1b','res-s2a','res-s2b','res-s3a','res-s3b'].forEach(id => {
+    document.getElementById(id).oninput = calcularPreviewResultado;
+  });
+}
+
+function calcularPreviewResultado() {
+  const s1a = parseInt(document.getElementById('res-s1a').value) || 0;
+  const s1b = parseInt(document.getElementById('res-s1b').value) || 0;
+  const s2a = parseInt(document.getElementById('res-s2a').value) || 0;
+  const s2b = parseInt(document.getElementById('res-s2b').value) || 0;
+  const s3a = parseInt(document.getElementById('res-s3a').value);
+  const s3b = parseInt(document.getElementById('res-s3b').value);
+
+  let sA = 0, sB = 0;
+  if (s1a > s1b) sA++; else if (s1b > s1a) sB++;
+  if (s2a > s2b) sA++; else if (s2b > s2a) sB++;
+  if (!isNaN(s3a) && !isNaN(s3b) && (s3a + s3b) > 0) {
+    if (s3a > s3b) sA++; else if (s3b > s3a) sB++;
+  }
+
+  if (sA + sB === 0) { document.getElementById('res-preview').style.display = 'none'; return; }
+
+  const pa = _partidoSel?.pareja_a?.nombre1 || 'A';
+  const pb = _partidoSel?.pareja_b?.nombre1 || 'B';
+  const ganador = sA > sB ? pa : sB > sA ? pb : null;
+  const prev = document.getElementById('res-preview');
+  prev.style.display = 'block';
+  prev.textContent = ganador ? `✓ Ganador: ${ganador}` : '⚠️ Sets empatados';
+}
+
+function onEspecial() {
+  const val = document.getElementById('res-especial').value;
+  const bloq = val === 'wo_a' || val === 'wo_b' || val === 'aplazado';
+  ['res-s1a','res-s1b','res-s2a','res-s2b','res-s3a','res-s3b'].forEach(id => {
+    document.getElementById(id).disabled = bloq;
+    document.getElementById(id).style.opacity = bloq ? '.4' : '1';
+  });
+}
+
+function abrirSiguienteResultado() {
+  const pendiente = _partidos.find(p => p.estado === 'pendiente');
+  if (pendiente) abrirResultado(pendiente.id);
+  else toast('No hay partidos pendientes', 'warn');
+}
+
+async function guardarResultado() {
+  const id      = document.getElementById('res-partido-id').value;
+  const especial = document.getElementById('res-especial').value;
+  const notas   = document.getElementById('res-notas').value.trim();
+
+  let estado = 'jugado';
+  let ganador = null;
+  let updates = {};
+
+  if (especial === 'wo_a' || especial === 'wo_b' || especial === 'aplazado') {
+    estado  = especial;
+    ganador = especial === 'wo_a' ? 'b' : especial === 'wo_b' ? 'a' : null;
+    updates = { estado, ganador, notas: notas || null };
+  } else {
+    const s1a = parseInt(document.getElementById('res-s1a').value);
+    const s1b = parseInt(document.getElementById('res-s1b').value);
+    if (isNaN(s1a) || isNaN(s1b)) { toast('Introduce el marcador del set 1', 'warn'); return; }
+
+    const s2a = parseInt(document.getElementById('res-s2a').value);
+    const s2b = parseInt(document.getElementById('res-s2b').value);
+    const s3a = isNaN(parseInt(document.getElementById('res-s3a').value)) ? null : parseInt(document.getElementById('res-s3a').value);
+    const s3b = isNaN(parseInt(document.getElementById('res-s3b').value)) ? null : parseInt(document.getElementById('res-s3b').value);
+
+    let sA = 0, sB = 0;
+    if (s1a > s1b) sA++; else if (s1b > s1a) sB++;
+    if (!isNaN(s2a) && !isNaN(s2b)) { if (s2a > s2b) sA++; else if (s2b > s2a) sB++; }
+    if (s3a != null && s3b != null)  { if (s3a > s3b) sA++; else if (s3b > s3a) sB++; }
+    ganador = sA > sB ? 'a' : sB > sA ? 'b' : null;
+
+    updates = { s1a, s1b, s2a: isNaN(s2a)?null:s2a, s2b: isNaN(s2b)?null:s2b, s3a, s3b, estado, ganador, notas: notas||null };
+  }
+
+  try {
+    await lpSavePartido({ id, ...updates });
+    closeSheet('sh-resultado');
+    toast('Resultado guardado ✓', 'ok');
+
+    // Recalcular clasificación de la división
+    const partido = _partidos.find(p => p.id === id);
+    if (partido?.division_id && _liga.formato === 'round_robin') {
+      await lpActualizarClasificacion(_ligaId, partido.division_id);
+    }
+    await cargar();
+  } catch(e) {
+    toast('Error al guardar: ' + (e.message || JSON.stringify(e)), 'err');
+    console.error(e);
+  }
+}
+
+// ── Sheet pareja ──────────────────────────────────────────────
+function abrirSheetPareja(parejaId) {
+  // Reset form
+  document.getElementById('par-id').value = parejaId || '';
+  document.getElementById('par-jug1-id').value = '';
+  document.getElementById('par-jug2-id').value = '';
+  document.getElementById('par-busq1').value = '';
+  document.getElementById('par-busq2').value = '';
+  document.getElementById('par-res1').style.display = 'none';
+  document.getElementById('par-res2').style.display = 'none';
+
+  // Reset cuotas
+  setCuota(1,'pagada'); setCuota(2,'pendiente');
+
+  // División
+  const selDiv = document.getElementById('par-division');
+  selDiv.innerHTML = _divisiones.map(d => `<option value="${d.id}">${d.nombre}</option>`).join('');
+  // Ocultar división si solo hay una
+  document.getElementById('fgrp-division').style.display = _divisiones.length > 1 ? 'block' : 'none';
+
+  document.getElementById('sh-par-titulo').textContent = 'Añadir pareja';
+  openSheet('sh-pareja');
+}
+
+function buscarJugador(n) {
+  const q = document.getElementById(`par-busq${n}`).value.toLowerCase().trim();
+  const res = document.getElementById(`par-res${n}`);
+  if (!q) { res.style.display = 'none'; return; }
+  const yaSeleccionados = [
+    document.getElementById('par-jug1-id').value,
+    document.getElementById('par-jug2-id').value
+  ].filter(Boolean);
+  const filtrados = _jugadores.filter(j => {
+    const nombre = [j.nombre, j.apellidos].filter(Boolean).join(' ').toLowerCase();
+    return nombre.includes(q) && !yaSeleccionados.includes(j.id);
+  }).slice(0, 5);
+  if (!filtrados.length) { res.style.display = 'none'; return; }
+  res.innerHTML = filtrados.map(j => {
+    const nombre = [j.nombre, j.apellidos].filter(Boolean).join(' ');
+    const ini    = nombre[0]?.toUpperCase() || '?';
+    const bg     = colorAvatar(nombre);
+    return `<div style="padding:9px 12px;display:flex;align-items:center;gap:9px;cursor:pointer;border-bottom:1px solid #f8fafc" onclick="seleccionarJugador(${n},'${j.id}','${nombre.replace(/'/g,"\'")}','${j.nivel||''}','${bg}','${ini}')">
+      <div style="width:28px;height:28px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;flex-shrink:0">${ini}</div>
+      <div>
+        <div style="font-size:12px;font-weight:800;color:var(--texto)">${nombre}</div>
+        <div style="font-size:10px;color:var(--sutil);font-weight:600">${j.nivel||''}</div>
+      </div>
+    </div>`;
+  }).join('');
+  res.style.display = 'block';
+}
+
+function seleccionarJugador(n, id, nombre, nivel, bg, ini) {
+  document.getElementById(`par-jug${n}-id`).value = id;
+  document.getElementById(`par-busq${n}`).value = '';
+  document.getElementById(`par-res${n}`).style.display = 'none';
+  // Mostrar seleccionado
+  const wrap = document.getElementById(`par-busq${n}`).closest('.fgrp');
+  wrap.innerHTML = `
+    <div class="flbl">Jugador seleccionado</div>
+    <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:8px 12px;display:flex;align-items:center;gap:9px">
+      <div style="width:28px;height:28px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;flex-shrink:0">${ini}</div>
+      <div style="flex:1;font-size:12px;font-weight:800;color:#15803d">${nombre}</div>
+      <div style="font-size:10px;color:var(--sutil);font-weight:600">${nivel}</div>
+      <button style="background:none;border:none;color:var(--sutil);font-size:16px;cursor:pointer" onclick="limpiarJugador(${n})">✕</button>
+    </div>`;
+}
+
+function limpiarJugador(n) {
+  document.getElementById(`par-jug${n}-id`).value = '';
+  const bloque = document.querySelector(`#sh-pareja .sheet > div:nth-child(${n===1?4:5}) .fgrp`);
+  // Re-render the search field
+  const wrap = document.querySelector(`#sh-pareja .sheet > div:nth-child(${n===1?4:5})`).querySelector('.fgrp');
+  wrap.innerHTML = `
+    <div class="flbl">Buscar en el club</div>
+    <input class="finp" id="par-busq${n}" placeholder="Nombre del jugador..." oninput="buscarJugador(${n})" autocomplete="off">
+    <div id="par-res${n}" style="background:#fff;border:1.5px solid var(--borde);border-radius:12px;margin-top:4px;display:none"></div>`;
+}
+
+function setCuota(n, val) {
+  document.getElementById(`cuota${n}-ok`).className   = 'ctog-cuota' + (val==='pagada'?'   on-ok':'');
+  document.getElementById(`cuota${n}-pend`).className = 'ctog-cuota' + (val==='pendiente'?' on-pend':'');
+}
+
+async function guardarPareja() {
+  const jug1id = document.getElementById('par-jug1-id').value;
+  const jug2id = document.getElementById('par-jug2-id').value;
+  if (!jug1id) { toast('Selecciona el jugador 1', 'warn'); return; }
+  if (!jug2id) { toast('Selecciona el jugador 2', 'warn'); return; }
+
+  const divId = document.getElementById('par-division').value || (_divisiones[0]?.id);
+  if (!divId) { toast('No hay divisiones configuradas', 'warn'); return; }
+
+  const jug1 = _jugadores.find(j => j.id === jug1id);
+  const jug2 = _jugadores.find(j => j.id === jug2id);
+  const nombre1 = [jug1?.nombre, jug1?.apellidos].filter(Boolean).join(' ');
+  const nombre2 = [jug2?.nombre, jug2?.apellidos].filter(Boolean).join(' ');
+
+  const cuota1 = document.getElementById('cuota1-ok').classList.contains('on-ok') ? 'pagada' : 'pendiente';
+  const cuota2 = document.getElementById('cuota2-ok').classList.contains('on-ok') ? 'pagada' : 'pendiente';
+
+  const idVal = document.getElementById('par-id').value;
+  const pareja = {
+    liga_id:     _ligaId,
+    division_id: divId,
+    nombre1,     nombre2,
+    jugador1_id: jug1id,
+    jugador2_id: jug2id,
+    cuota1,      cuota2,
+    estado_inscripcion: 'confirmada',
+  };
+  if (idVal) pareja.id = idVal;
+
+  try {
+    await lpSavePareja(pareja);
+    closeSheet('sh-pareja');
+    toast('Pareja guardada ✓', 'ok');
+    await cargar();
+    renderParticipantes();
+  } catch(e) {
+    toast('Error: ' + (e.message || JSON.stringify(e)), 'err');
+  }
+}
+
+// ── Generar calendario ────────────────────────────────────────
+function confirmarGenerarCalendario() {
+  document.getElementById('confirm-titulo').textContent = '¿Generar la liga?';
+  document.getElementById('confirm-texto').textContent  =
+    'Se cerará la inscripción y se generarán todos los partidos. No podrás añadir más parejas después.';
+  document.getElementById('confirm-overlay').classList.add('open');
+  document.getElementById('confirm-ok').onclick = generarCalendario;
+}
+
+async function generarCalendario() {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  toast('Generando calendario…', 'ok');
+
+  try {
+    await lpDeletePartidosLiga(_ligaId);
+
+    const partidos = [];
+    for (const div of _divisiones) {
+      const parejasDiv = _parejas.filter(p => p.division_id === div.id && p.estado_inscripcion === 'confirmada');
+      if (parejasDiv.length < 2) continue;
+
+      const jornadasRR = lpGenerarRoundRobin(parejasDiv.length);
+      const jornadasLiga = _jornadas.filter(j => j.tipo === 'regular');
+
+      jornadasRR.forEach((ronda, rondaIdx) => {
+        const jornada = jornadasLiga[rondaIdx];
+        if (!jornada) return;
+        ronda.forEach(([iA, iB]) => {
+          partidos.push({
+            liga_id:     _ligaId,
+            jornada_id:  jornada.id,
+            division_id: div.id,
+            pareja_a_id: parejasDiv[iA].id,
+            pareja_b_id: parejasDiv[iB].id,
+            fecha_sugerida: jornada.fecha_ini,
+            estado:      'pendiente',
+          });
+        });
+      });
+    }
+
+    if (partidos.length) await lpSavePartidosLote(partidos);
+    await lpSaveLiga({ id: _ligaId, estado: 'activa' });
+
+    toast(`✓ ${partidos.length} partidos generados`, 'ok');
+    await cargar();
+    showTab('calendario');
+  } catch(e) {
+    toast('Error al generar: ' + (e.message || JSON.stringify(e)), 'err');
+    console.error(e);
+  }
+}
+
+// ── Material ──────────────────────────────────────────────────
+function renderMaterial() {
+  const el = document.getElementById('lista-material');
+  const items = _liga.material_entrega || [];
+  if (!items.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;font-size:12px;color:var(--sutil);font-weight:700">No hay material configurado para esta liga.</div>';
+    return;
+  }
+
+  const parejas = _parejas.filter(p => p.estado_inscripcion === 'confirmada');
+  if (!parejas.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;font-size:12px;color:var(--sutil);font-weight:700">Sin parejas inscritas todavía.</div>';
+    return;
+  }
+
+  el.innerHTML = `<div style="background:#f8fafc;border-radius:12px;padding:8px 10px;border:1px solid #f1f5f9">
+    ${parejas.map(p => {
+      const nombre  = p.nombre2 ? `${p.nombre1} / ${p.nombre2}` : p.nombre1;
+      const entregado = p.material_entregado || {};
+      const todoOk    = items.every(m => entregado[m]);
+      return `<div style="padding:8px 0;border-bottom:1px solid #f8fafc">
+        <div style="font-size:12px;font-weight:800;color:var(--texto);margin-bottom:5px">${nombre}</div>
+        ${items.map(m => {
+          const ok = !!entregado[m];
+          return `<div class="material-check">
+            <input type="checkbox" class="mat-chk" ${ok?'checked':''}
+              onchange="toggleMaterial('${p.id}','${m}',this.checked)">
+            <span class="mat-lbl ${ok?'mat-ok':''}">${m}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+async function toggleMaterial(parejaId, item, checked) {
+  const pareja = _parejas.find(p => p.id === parejaId);
+  if (!pareja) return;
+  const mat = { ...(pareja.material_entregado || {}) };
+  if (checked) mat[item] = true; else delete mat[item];
+  try {
+    await lpSavePareja({ id: parejaId, material_entregado: mat });
+    pareja.material_entregado = mat;
+  } catch(e) { toast('Error', 'err'); }
+}
+
+// ── Publicación ───────────────────────────────────────────────
+function renderPreviewPublicacion() {
+  const divId = document.getElementById('pub-division').value;
+  const titulo = document.getElementById('pub-titulo').value.trim() || _liga?.nombre || '—';
+
+  document.getElementById('pub-prev-nombre').textContent = _liga?.nombre || '—';
+  document.getElementById('pub-prev-sub').textContent    = titulo;
+
+  const parejas = divId
+    ? _parejas.filter(p => p.division_id === divId)
+    : _parejas.slice(0, 8);
+
+  const sorted = [...parejas].sort((a,b) => b.pts - a.pts || (b.sf-b.sc) - (a.sf-a.sc));
+
+  document.getElementById('pub-prev-tbody').innerHTML = sorted.map((p, i) => {
+    const nombre = p.nombre2 ? `${p.nombre1}/${p.nombre2}` : p.nombre1;
+    return `<tr ${i<3?'style="font-weight:800"':''}><td>${i+1}</td><td>${nombre}</td><td>${p.pts}</td><td>${p.pg}</td><td>${p.pp}</td></tr>`;
+  }).join('');
+
+  const jugados = _partidos.filter(p => p.estado === 'jugado').slice(-5);
+  document.getElementById('pub-prev-resultados').innerHTML = jugados.map(p => `
+    <div class="res-pub">
+      <span>${p.pareja_a?.nombre1 || '—'} – ${p.pareja_b?.nombre1 || '—'}</span>
+      <span style="font-weight:900;color:#1e3a8a">${formatScore(p)}</span>
+    </div>`).join('') || '<div style="font-size:10px;color:#93c5fd;text-align:center">Sin resultados aún</div>';
+}
+
+async function compartirWA() {
+  const titulo = document.getElementById('pub-titulo').value.trim() || _liga?.nombre || '';
+  let texto = `🎾 *${_liga?.nombre || 'LigaPádel'}*\n_${titulo}_\n\n`;
+  texto += `*CLASIFICACIÓN*\n`;
+  const sorted = [..._parejas].sort((a,b) => b.pts - a.pts).slice(0,8);
+  sorted.forEach((p,i) => {
+    const nombre = p.nombre2 ? `${p.nombre1}/${p.nombre2}` : p.nombre1;
+    texto += `${i+1}. ${nombre} — ${p.pts}pts (${p.pg}G/${p.pp}P)\n`;
+  });
+  const jugados = _partidos.filter(p => p.estado === 'jugado').slice(-5);
+  if (jugados.length) {
+    texto += `\n*RESULTADOS*\n`;
+    jugados.forEach(p => {
+      texto += `${p.pareja_a?.nombre1||'—'} – ${p.pareja_b?.nombre1||'—'}: ${formatScore(p)}\n`;
+    });
+  }
+  window.open('https://wa.me/?text=' + encodeURIComponent(texto));
+}
+
+function descargarImagenPDF() {
+  toast('Generando documento… (próximamente)', 'ok');
+}
+
+// ── Normativa ─────────────────────────────────────────────────
+function renderNormativa() {
+  if (!_normativa) return;
+  document.getElementById('norm-titulo').value  = _normativa.titulo || '';
+  document.getElementById('norm-horario').value = _normativa.horario_juego || '';
+  document.getElementById('norm-texto').value   = _normativa.texto_libre || '';
+
+  const urlBase = 'ligapadel.app';
+  const urlPub  = _liga?.url_publica ? `https://${urlBase}/${_liga.url_publica}` : '(sin URL pública configurada)';
+  document.getElementById('url-publica-display').textContent = urlPub;
+}
+
+async function guardarNormativa() {
+  try {
+    await lpSaveNormativa({
+      liga_id:       _ligaId,
+      titulo:        document.getElementById('norm-titulo').value.trim() || null,
+      horario_juego: document.getElementById('norm-horario').value.trim() || null,
+      texto_libre:   document.getElementById('norm-texto').value.trim() || null,
+    });
+    toast('Normativa guardada ✓', 'ok');
+    _normativa = await lpGetNormativa(_ligaId);
+  } catch(e) { toast('Error', 'err'); }
+}
+
+function copiarUrlPublica() {
+  const url = document.getElementById('url-publica-display').textContent;
+  navigator.clipboard.writeText(url).then(() => toast('URL copiada ✓', 'ok'));
+}
+
+function compartirUrlWA() {
+  const url = document.getElementById('url-publica-display').textContent;
+  window.open('https://wa.me/?text=' + encodeURIComponent(`Consulta la clasificación y el calendario:\n${url}`));
+}
+
+function exportarCalendarioPDF() { toast('PDF próximamente', 'ok'); }
+function compartirCalendarioWA() {
+  let texto = `📅 *Calendario — ${_liga?.nombre || ''}*\n\n`;
+  _jornadas.forEach(j => {
+    texto += `*${j.tipo==='recuperacion'?'Recuperación':'J'+j.numero}* (${j.fecha_ini ? lpFechaCorta(j.fecha_ini)+' – '+lpFechaCorta(j.fecha_fin) : 'sin fecha'})\n`;
+    _partidos.filter(p=>p.jornada_id===j.id).forEach(p => {
+      texto += `  ${p.pareja_a?.nombre1||'—'} vs ${p.pareja_b?.nombre1||'—'}\n`;
+    });
+    texto += '\n';
+  });
+  window.open('https://wa.me/?text=' + encodeURIComponent(texto));
+}
+
+// ── Carga ──────────────────────────────────────────────────────
+async function cargar() {
+  [_liga, _divisiones, _parejas, _partidos, _jornadas, _jugadores, _normativa] = await Promise.all([
+    lpGetLiga(_ligaId),
+    lpGetDivisiones(_ligaId),
+    lpGetParejas(_ligaId),
+    lpGetPartidos(_ligaId),
+    lpGetJornadas(_ligaId),
+    lpGetJugadores(),
+    lpGetNormativa(_ligaId),
+  ]);
+
+  // Poblar filtros de jornada en resultados
+  const selJ = document.getElementById('filt-jornada-res');
+  selJ.innerHTML = '<option value="">Todas</option>' +
+    _jornadas.map(j => `<option value="${j.id}">${j.tipo==='recuperacion'?'Recuperación':'J'+j.numero}</option>`).join('');
+
+  // Poblar filtros de división en participantes y publicación
+  const divOpts = _divisiones.map(d => `<option value="${d.id}">${d.nombre}</option>`).join('');
+  document.getElementById('filt-div-par').innerHTML   = '<option value="">Todas</option>' + divOpts;
+  document.getElementById('pub-division').innerHTML   = '<option value="">Todas</option>' + divOpts;
+
+  if (!_divActual && _divisiones.length) _divActual = _divisiones[0].id;
+}
+
+// ── Init ───────────────────────────────────────────────────────
+async function init() {
+  if (!_ligaId) { window.location.href = 'index.html'; return; }
+
+  await lpInit();
+  await cargar();
+
+  renderHeader({
+    titulo:      _liga.nombre,
+    subtitulo:   [_liga.categoria, _liga.temporada].filter(Boolean).join(' · '),
+    icono:       'icons/ligas.png',
+    botonDerecho: 'back',
+    onBack:      'index.html',
+  });
+  renderNav('ligas');
+
+  showTab(_tabIni);
+}
+
+init();
+</script>
+</body>
+</html>

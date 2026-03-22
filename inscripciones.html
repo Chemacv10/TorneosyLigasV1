@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Inscripciones — LigaPádel</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .info-bar { background:#eff6ff; border:1.5px solid #bfdbfe; border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; }
+    .info-txt  { font-size:11px; font-weight:700; color:#1e40af; }
+    .info-val  { font-size:13px; font-weight:900; color:var(--azul); }
+
+    .filtros   { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+
+    .div-label { font-size:10px; font-weight:900; color:var(--sutil); text-transform:uppercase; letter-spacing:.5px; margin:10px 0 5px; padding-left:2px; }
+
+    .par-card  { background:var(--card); border-radius:14px; border:1.5px solid var(--borde); padding:10px 12px; box-shadow:0 1px 4px rgba(0,0,0,.05); display:flex; gap:8px; align-items:center; margin-bottom:6px; }
+    .par-jugs  { flex:1; display:flex; flex-direction:column; gap:6px; }
+    .par-row   { display:flex; align-items:center; gap:8px; }
+    .par-av    { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; flex-shrink:0; color:#fff; }
+    .par-nombre { font-size:12px; font-weight:800; color:var(--texto); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0; }
+    .par-del   { background:none; border:none; color:var(--sutil); font-size:15px; cursor:pointer; padding:4px 6px; border-radius:8px; flex-shrink:0; }
+    .par-del:hover { background:#fee2e2; color:var(--rojo); }
+
+    .ctog      { flex:1; padding:3px 9px; border-radius:100px; font-size:10px; font-weight:800; border:none; cursor:pointer; white-space:nowrap; }
+    .cok       { background:#dcfce7; color:#15803d; }
+    .cpend     { background:#fee2e2; color:#dc2626; }
+
+    .btn-cerrar { width:100%; padding:13px; border-radius:14px; background:var(--verde); color:#fff; font-family:Nunito,sans-serif; font-size:14px; font-weight:900; border:none; cursor:pointer; box-shadow:0 3px 12px rgba(22,163,74,.3); margin-top:6px; }
+
+    /* Sheet */
+    .jugador-bloque { background:#f8fafc; border-radius:12px; padding:12px; margin-bottom:10px; }
+    .jugador-titulo { font-size:11px; font-weight:900; color:var(--sutil); text-transform:uppercase; letter-spacing:.4px; margin-bottom:10px; }
+    .ctog-cuota { flex:1; padding:8px; border-radius:10px; border:1.5px solid var(--borde); background:#fff; font-family:Nunito,sans-serif; font-size:11px; font-weight:800; cursor:pointer; color:var(--sutil); }
+    .ctog-cuota.on-ok   { background:#dcfce7; border-color:#86efac; color:#15803d; }
+    .ctog-cuota.on-pend { background:#fee2e2; border-color:#fca5a5; color:#dc2626; }
+    .jug-results { background:#fff; border:1.5px solid var(--borde); border-radius:12px; margin-top:4px; display:none; }
+    .jug-opt { padding:9px 12px; display:flex; align-items:center; gap:9px; cursor:pointer; border-bottom:1px solid #f8fafc; }
+    .jug-opt:last-child { border-bottom:none; }
+    .jug-opt:hover { background:#f8fafc; }
+    .jug-sel { background:#f0fdf4; border:1.5px solid #86efac; border-radius:12px; padding:8px 12px; display:flex; align-items:center; gap:9px; }
+    .jug-sel-nombre { flex:1; font-size:12px; font-weight:800; color:#15803d; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div id="header-container"></div>
+  <nav id="nav-container"></nav>
+
+  <main class="content">
+    <div class="info-bar" id="info-cuotas">
+      <div class="info-txt">Cuotas cobradas</div>
+      <div class="info-val" id="info-cuotas-val">0 / 0 jugadores</div>
+    </div>
+
+    <div class="filtros">
+      <select class="fsel" id="filt-div" onchange="renderLista()">
+        <option value="">Todas las divisiones</option>
+      </select>
+      <select class="fsel" id="filt-cuota" onchange="renderLista()">
+        <option value="">Todas las cuotas</option>
+        <option value="pagada">Pagadas</option>
+        <option value="pendiente">Pendientes</option>
+      </select>
+    </div>
+
+    <div id="lista-parejas"></div>
+
+    <div id="btn-cerrar-wrap" style="display:none">
+      <button class="btn-cerrar" onclick="confirmarCierre()">✓ Cerrar inscripción y continuar</button>
+    </div>
+  </main>
+
+  <button class="fab" id="fab-btn" onclick="abrirSheet()">+</button>
+
+</div>
+
+<!-- SHEET AÑADIR PAREJA -->
+<div class="overlay" id="sh-pareja">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Añadir pareja</div>
+    <input type="hidden" id="par-jug1-id">
+    <input type="hidden" id="par-jug2-id">
+
+    <div class="jugador-bloque">
+      <div class="jugador-titulo">Jugador 1</div>
+      <div class="fgrp" id="jug1-wrap">
+        <div class="flbl">Buscar en el club</div>
+        <input class="finp" id="par-busq1" placeholder="Nombre del jugador..." oninput="buscarJugador(1)" autocomplete="off">
+        <div class="jug-results" id="par-res1"></div>
+      </div>
+      <div class="fgrp">
+        <div class="flbl">Cuota</div>
+        <div style="display:flex;gap:6px">
+          <button class="ctog-cuota on-ok" id="cuota1-ok"   onclick="setCuota(1,'pagada')">✓ Pagada</button>
+          <button class="ctog-cuota"       id="cuota1-pend" onclick="setCuota(1,'pendiente')">Pendiente</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="jugador-bloque">
+      <div class="jugador-titulo">Jugador 2</div>
+      <div class="fgrp" id="jug2-wrap">
+        <div class="flbl">Buscar en el club</div>
+        <input class="finp" id="par-busq2" placeholder="Nombre del jugador..." oninput="buscarJugador(2)" autocomplete="off">
+        <div class="jug-results" id="par-res2"></div>
+      </div>
+      <div class="fgrp">
+        <div class="flbl">Cuota</div>
+        <div style="display:flex;gap:6px">
+          <button class="ctog-cuota"       id="cuota2-ok"   onclick="setCuota(2,'pagada')">✓ Pagada</button>
+          <button class="ctog-cuota on-pend" id="cuota2-pend" onclick="setCuota(2,'pendiente')">Pendiente</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="fgrp" id="fgrp-division">
+      <div class="flbl">División</div>
+      <select class="fsel" id="par-division"></select>
+    </div>
+
+    <div class="sheet-btns">
+      <button class="sbtn" onclick="closeSheet('sh-pareja')">Cancelar</button>
+      <button class="sbtn prim" onclick="guardarPareja()">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/store-liga.js"></script>
+<script src="js/ui.js"></script>
+<script>
+
+const params   = new URLSearchParams(location.search);
+const _ligaId  = params.get('id');
+
+let _liga       = null;
+let _divisiones = [];
+let _parejas    = [];
+let _jugadores  = [];
+
+// ── Render lista ──────────────────────────────────────────────
+function renderLista() {
+  const filtDiv   = document.getElementById('filt-div').value;
+  const filtCuota = document.getElementById('filt-cuota').value;
+
+  let lista = _parejas.filter(p => {
+    if (filtDiv   && p.division_id !== filtDiv) return false;
+    if (filtCuota === 'pagada'    && (p.cuota1 !== 'pagada'    || p.cuota2 !== 'pagada'))    return false;
+    if (filtCuota === 'pendiente' && p.cuota1  !== 'pendiente' && p.cuota2 !== 'pendiente') return false;
+    return true;
+  });
+
+  // Actualizar info cuotas
+  const total   = _parejas.length * 2;
+  const pagados = _parejas.reduce((s, p) => s + (p.cuota1 === 'pagada' ? 1 : 0) + (p.cuota2 === 'pagada' ? 1 : 0), 0);
+  document.getElementById('info-cuotas-val').textContent = `${pagados} / ${total} jugadores`;
+
+  const el = document.getElementById('lista-parejas');
+
+  if (!lista.length) {
+    el.innerHTML = `<div style="text-align:center;padding:30px 20px;font-size:12px;color:var(--sutil);font-weight:700">
+      Sin participantes todavía.<br>Pulsa + para añadir.
+    </div>`;
+    document.getElementById('btn-cerrar-wrap').style.display = 'none';
+    return;
+  }
+
+  // Agrupar por división
+  const porDiv = {};
+  lista.forEach(p => {
+    const k = p.division_id || '_';
+    if (!porDiv[k]) porDiv[k] = [];
+    porDiv[k].push(p);
+  });
+
+  let html = '';
+  Object.keys(porDiv).forEach(divId => {
+    const div = _divisiones.find(d => d.id === divId);
+    if (_divisiones.length > 1) {
+      html += `<div class="div-label">${div?.nombre || 'Sin división'}</div>`;
+    }
+    porDiv[divId].forEach(p => {
+      const ini1 = (p.nombre1 || '?')[0].toUpperCase();
+      const ini2 = (p.nombre2 || '?')[0].toUpperCase();
+      const bg1  = colorAvatar(p.nombre1 || '');
+      const bg2  = colorAvatar(p.nombre2 || 'B');
+      const c1ok = (p.cuota1 || 'pendiente') === 'pagada';
+      const c2ok = (p.cuota2 || 'pendiente') === 'pagada';
+      html += `<div class="par-card">
+        <div class="par-jugs">
+          <div class="par-row">
+            <div class="par-av" style="background:${bg1}">${ini1}</div>
+            <div class="par-nombre">${p.nombre1 || '—'}</div>
+            <button class="ctog ${c1ok ? 'cok' : 'cpend'}" onclick="toggleCuota('${p.id}',1)">${c1ok ? '✓ Pagada' : 'Pendiente'}</button>
+          </div>
+          <div class="par-row">
+            <div class="par-av" style="background:${bg2}">${ini2}</div>
+            <div class="par-nombre">${p.nombre2 || '—'}</div>
+            <button class="ctog ${c2ok ? 'cok' : 'cpend'}" onclick="toggleCuota('${p.id}',2)">${c2ok ? '✓ Pagada' : 'Pendiente'}</button>
+          </div>
+        </div>
+        <button class="par-del" onclick="eliminarPareja('${p.id}')">✕</button>
+      </div>`;
+    });
+  });
+
+  el.innerHTML = html;
+  document.getElementById('btn-cerrar-wrap').style.display = _parejas.length >= 2 ? 'block' : 'none';
+}
+
+// ── Toggle cuota ──────────────────────────────────────────────
+async function toggleCuota(id, n) {
+  const p = _parejas.find(x => x.id === id);
+  if (!p) return;
+  const campo = n === 1 ? 'cuota1' : 'cuota2';
+  p[campo] = (p[campo] === 'pagada') ? 'pendiente' : 'pagada';
+  await lpSavePareja(p);
+  renderLista();
+}
+
+// ── Eliminar pareja ───────────────────────────────────────────
+async function eliminarPareja(id) {
+  if (!confirm('¿Eliminar esta pareja?')) return;
+  await lpDeletePareja(id);
+  _parejas = _parejas.filter(p => p.id !== id);
+  renderLista();
+  toast('Pareja eliminada');
+}
+
+// ── Sheet ─────────────────────────────────────────────────────
+function abrirSheet() {
+  document.getElementById('par-jug1-id').value = '';
+  document.getElementById('par-jug2-id').value = '';
+  resetBuscador(1); resetBuscador(2);
+  setCuota(1, 'pagada'); setCuota(2, 'pendiente');
+
+  const selDiv = document.getElementById('par-division');
+  selDiv.innerHTML = _divisiones.map(d => `<option value="${d.id}">${d.nombre}</option>`).join('');
+  document.getElementById('fgrp-division').style.display = _divisiones.length > 1 ? 'block' : 'none';
+
+  openSheet('sh-pareja');
+}
+
+function resetBuscador(n) {
+  const wrap = document.getElementById(`jug${n}-wrap`);
+  wrap.innerHTML = `
+    <div class="flbl">Buscar en el club</div>
+    <input class="finp" id="par-busq${n}" placeholder="Nombre del jugador..." oninput="buscarJugador(${n})" autocomplete="off">
+    <div class="jug-results" id="par-res${n}"></div>`;
+}
+
+function buscarJugador(n) {
+  const q   = document.getElementById(`par-busq${n}`).value.toLowerCase().trim();
+  const res = document.getElementById(`par-res${n}`);
+  if (!q) { res.style.display = 'none'; return; }
+
+  const yaElegidos = [
+    document.getElementById('par-jug1-id').value,
+    document.getElementById('par-jug2-id').value,
+    ..._parejas.flatMap(p => [p.jugador1_id, p.jugador2_id])
+  ].filter(Boolean);
+
+  const filtrados = _jugadores.filter(j => {
+    const nombre = [j.nombre, j.apellidos].filter(Boolean).join(' ').toLowerCase();
+    return nombre.includes(q) && !yaElegidos.includes(j.id);
+  }).slice(0, 6);
+
+  if (!filtrados.length) { res.innerHTML = '<div style="padding:10px 12px;font-size:12px;color:var(--sutil);font-weight:600">Sin resultados</div>'; res.style.display = 'block'; return; }
+
+  res.innerHTML = filtrados.map(j => {
+    const nombre = [j.nombre, j.apellidos].filter(Boolean).join(' ');
+    const ini    = nombre[0]?.toUpperCase() || '?';
+    const bg     = colorAvatar(nombre);
+    return `<div class="jug-opt" onclick="seleccionarJugador(${n},'${j.id}','${nombre.replace(/'/g,"\\'")}','${j.nivel || ''}','${bg}','${ini}')">
+      <div style="width:28px;height:28px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;flex-shrink:0">${ini}</div>
+      <div>
+        <div style="font-size:12px;font-weight:800;color:var(--texto)">${nombre}</div>
+        <div style="font-size:10px;color:var(--sutil);font-weight:600">${j.nivel || ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+  res.style.display = 'block';
+}
+
+function seleccionarJugador(n, id, nombre, nivel, bg, ini) {
+  document.getElementById(`par-jug${n}-id`).value = id;
+  const wrap = document.getElementById(`jug${n}-wrap`);
+  wrap.innerHTML = `
+    <div class="flbl">Jugador seleccionado</div>
+    <div class="jug-sel">
+      <div style="width:28px;height:28px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;flex-shrink:0">${ini}</div>
+      <div class="jug-sel-nombre">${nombre}</div>
+      <div style="font-size:10px;color:var(--sutil);font-weight:600">${nivel}</div>
+      <button style="background:none;border:none;color:var(--sutil);font-size:16px;cursor:pointer" onclick="document.getElementById('par-jug${n}-id').value='';resetBuscador(${n})">✕</button>
+    </div>`;
+}
+
+function setCuota(n, val) {
+  document.getElementById(`cuota${n}-ok`).className   = 'ctog-cuota' + (val === 'pagada'    ? ' on-ok'   : '');
+  document.getElementById(`cuota${n}-pend`).className = 'ctog-cuota' + (val === 'pendiente' ? ' on-pend' : '');
+}
+
+async function guardarPareja() {
+  const jug1id = document.getElementById('par-jug1-id').value;
+  const jug2id = document.getElementById('par-jug2-id').value;
+  if (!jug1id) { toast('Selecciona el jugador 1', 'warn'); return; }
+  if (!jug2id) { toast('Selecciona el jugador 2', 'warn'); return; }
+
+  const divId = document.getElementById('par-division').value || _divisiones[0]?.id;
+  const jug1  = _jugadores.find(j => j.id === jug1id);
+  const jug2  = _jugadores.find(j => j.id === jug2id);
+  const cuota1 = document.getElementById('cuota1-ok').classList.contains('on-ok') ? 'pagada' : 'pendiente';
+  const cuota2 = document.getElementById('cuota2-ok').classList.contains('on-ok') ? 'pagada' : 'pendiente';
+
+  const pareja = {
+    liga_id:     _ligaId,
+    division_id: divId,
+    nombre1:     [jug1?.nombre, jug1?.apellidos].filter(Boolean).join(' '),
+    nombre2:     [jug2?.nombre, jug2?.apellidos].filter(Boolean).join(' '),
+    jugador1_id: jug1id,
+    jugador2_id: jug2id,
+    cuota1, cuota2,
+    estado_inscripcion: 'confirmada',
+  };
+
+  try {
+    await lpSavePareja(pareja);
+    closeSheet('sh-pareja');
+    toast('Pareja añadida ✓', 'ok');
+    _parejas = await lpGetParejas(_ligaId);
+    renderLista();
+  } catch(e) {
+    toast('Error: ' + (e.message || e), 'err');
+  }
+}
+
+// ── Cerrar inscripción ────────────────────────────────────────
+async function confirmarCierre() {
+  if (!confirm('¿Cerrar inscripción?\n\nNo podrás añadir más parejas. A continuación definirás el calendario.')) return;
+  await lpSaveLiga({ id: _ligaId, estado: 'activa' });
+  window.location.href = `calendario.html?id=${_ligaId}`;
+}
+
+// ── Init ──────────────────────────────────────────────────────
+async function init() {
+  if (!_ligaId) { window.location.href = 'index.html'; return; }
+  await lpInit();
+
+  [_liga, _divisiones, _parejas, _jugadores] = await Promise.all([
+    lpGetLiga(_ligaId),
+    lpGetDivisiones(_ligaId),
+    lpGetParejas(_ligaId),
+    lpGetJugadores(),
+  ]);
+
+  renderHeader({
+    titulo:       _liga.nombre,
+    subtitulo:    'Inscripciones · ' + _parejas.length + ' parejas',
+    icono:        'icons/inscripciones.png',
+    botonDerecho: 'back',
+    onBack:       'index.html',
+  });
+  renderNav('ligas');
+
+  // Poblar filtro divisiones
+  const selDiv = document.getElementById('filt-div');
+  _divisiones.forEach(d => {
+    selDiv.innerHTML += `<option value="${d.id}">${d.nombre}</option>`;
+  });
+
+  renderLista();
+}
+
+init();
+</script>
+</body>
+</html>
