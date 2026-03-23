@@ -105,13 +105,10 @@
       <div class="frow">
         <div class="fgrp">
           <div class="flbl">Sexo</div>
-          <select class="fsel" id="jug-sexo">
-            <option value="">— Sin especificar —</option>
-            <option value="M">Masculino</option>
-            <option value="F">Femenino</option>
-          </select>
+          <div class="csel-wrap" id="jug-sexo-csel"></div>
+          <input type="hidden" id="jug-sexo">
         </div>
-        <div class="fgrp" id="wrap-nivel-display" style="display:none">
+        <div class="fgrp">
           <div class="flbl">Nivel calculado</div>
           <div id="jug-nivel-display" style="padding:9px 12px;border-radius:12px;background:#f8fafc;border:1.5px solid var(--borde);font-size:13px;font-weight:800;color:var(--sutil);min-height:40px;display:flex;align-items:center">—</div>
         </div>
@@ -261,7 +258,10 @@ function abrirNuevo() {
   document.getElementById('jug-email').value    = '';
   document.getElementById('jug-notas').value    = '';
   document.getElementById('jug-sexo').value     = '';
-  document.getElementById('wrap-nivel-display').style.display = 'none';
+  cselRender('jug-sexo-csel', ['— Sin especificar —','Masculino','Femenino'], '— Sin especificar —', null,
+    (val) => { document.getElementById('jug-sexo').value = val === 'Masculino' ? 'M' : val === 'Femenino' ? 'F' : ''; },
+    null, null, null);
+  document.getElementById('jug-nivel-display').textContent = '—';
   openSheet('sh-jugador');
 }
 
@@ -276,15 +276,13 @@ function abrirEditar(id) {
   document.getElementById('jug-anyo').value          = j.año_nacimiento || '';
   document.getElementById('jug-email').value         = j.email || '';
   document.getElementById('jug-notas').value         = j.notas || '';
-  document.getElementById('jug-sexo').value          = j.sexo || '';
-  const nivelWrap = document.getElementById('wrap-nivel-display');
-  const nivelEl   = document.getElementById('jug-nivel-display');
-  if (j.nivel != null) {
-    nivelWrap.style.display = 'block';
-    nivelEl.textContent = `⭐ ${parseFloat(j.nivel).toFixed(1)}`;
-  } else {
-    nivelWrap.style.display = 'none';
-  }
+  document.getElementById('jug-sexo').value = j.sexo || '';
+  const sexoLabel = j.sexo === 'M' ? 'Masculino' : j.sexo === 'F' ? 'Femenino' : '— Sin especificar —';
+  cselRender('jug-sexo-csel', ['— Sin especificar —','Masculino','Femenino'], sexoLabel, null,
+    (val) => { document.getElementById('jug-sexo').value = val === 'Masculino' ? 'M' : val === 'Femenino' ? 'F' : ''; },
+    null, null, null);
+  document.getElementById('jug-nivel-display').textContent =
+    j.nivel != null ? `⭐ ${parseFloat(j.nivel).toFixed(1)}` : '—';
   openSheet('sh-jugador');
 }
 

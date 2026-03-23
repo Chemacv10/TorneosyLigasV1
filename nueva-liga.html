@@ -516,13 +516,20 @@ async function init() {
   const ok = await lpInit(); if (!ok) return;
 
   // Inicializar csel de categoría y edad
-  cselRender('f1-categoria-csel', ['Masculina','Femenina','Mixta'], 'Masculina', null, null, null, null, null);
-  cselRender('f1-edad-csel', ['Absoluto','Benjamín','Alevín','Infantil','Cadete','Juvenil','Veteranos +35','Veteranos +45','Veteranos +55'],
-    'Absoluto', null, null, null, null, null);
-  cselRender('f1-formato-csel', ['Round-Robin','Americano'], 'Round-Robin', null,
+  const _cfgCategorias = ['Masculina','Femenina','Mixta'];
+  const _cfgEdades = ['Absoluto','Benjamín','Alevín','Infantil','Cadete','Juvenil','Veteranos +35','Veteranos +45','Veteranos +55'];
+  const _cfgFormatos = ['Round-Robin','Americano'];
+  const _cfgSets = ['Mejor de 3 + STB','Mejor de 3','Pro-set 10 games'];
+
+  cselRender('f1-categoria-csel', _cfgCategorias, 'Masculina', null, null,
+    (val, ops) => {}, (val, ops) => {}, '+ Añadir categoría…');
+  cselRender('f1-edad-csel', _cfgEdades, 'Absoluto', null, null,
+    (val, ops) => {}, (val, ops) => {}, '+ Añadir edad…');
+  cselRender('f1-formato-csel', _cfgFormatos, 'Round-Robin', null,
     (val) => { document.getElementById('wrap-puntuacion').style.display = val === 'Americano' ? 'none' : 'block'; },
-    null, null, null);
-  cselRender('f1-sets-csel', ['Mejor de 3 + STB','Mejor de 3','Pro-set 10 games'], 'Mejor de 3 + STB', null, null, null, null, null);
+    (val, ops) => {}, (val, ops) => {}, '+ Añadir formato…');
+  cselRender('f1-sets-csel', _cfgSets, 'Mejor de 3 + STB', null, null,
+    (val, ops) => {}, (val, ops) => {}, '+ Añadir formato sets…');
 
   // Fecha sugerida: hoy + 1 semana a hoy + 7 meses
   const hoy = new Date();
