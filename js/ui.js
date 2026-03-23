@@ -582,63 +582,68 @@ async function _gcConfirmar() {
 }
 
 // ── Selector custom con ✕ integrado (csel) ─────
-/**
- * Renderiza un selector custom en el contenedor dado.
- * @param {string} containerId  — id del div .csel-wrap
- * @param {string[]} opciones   — lista de opciones
- * @param {string} seleccionada — valor seleccionado actual
- * @param {string|null} noBorrar — opción que no puede borrarse (ej: 'Sin grupo')
- * @param {Function} onChange   — callback(nuevoValor)
- * @param {Function} onDelete   — callback(valorEliminado) — null si no se puede borrar
- * @param {Function} onAdd      — callback(nuevoValor)
- * @param {string} placeholder  — placeholder del input de añadir
- */
 function cselRender(containerId, opciones, seleccionada, noBorrar, onChange, onDelete, onAdd, placeholder) {
   const wrap = document.getElementById(containerId);
   if (!wrap) return;
-  const listaId = containerId + '-lista';
-  const inpId   = containerId + '-inp';
-
+  const inpId = containerId + '-inp';
   wrap.innerHTML = `
-    <div class="csel-lista" id="${listaId}"></div>
-    ${onAdd ? `<div class="csel-add">
-      <input class="csel-add-inp" id="${inpId}" placeholder="${placeholder || '+ Añadir…'}"
-        onkeydown="if(event.key==='Enter'){event.preventDefault();cselAdd('${containerId}');}">
-      <button class="csel-add-btn" onclick="cselAdd('${containerId}')">+</button>
-    </div>` : ''}`;
-
-  wrap._cselState = { opciones: [...opciones], seleccionada, noBorrar, onChange, onDelete, onAdd, placeholder };
+    <div class="csel-trigger" onclick="cselToggle('${containerId}')">
+      <div class="csel-trigger-label" id="${containerId}-tlabel">—</div>
+      <div class="csel-trigger-arrow" id="${containerId}-arrow">▼</div>
+    </div>
+    <div class="csel-dropdown" id="${containerId}-drop" style="display:none">
+      <div id="${containerId}-lista"></div>
+      ${onAdd ? `<div class="csel-add">
+        <input class="csel-add-inp" id="${inpId}" placeholder="${placeholder || '+ Añadir…'}"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();cselAdd('${containerId}');}">
+        <button class="csel-add-btn" onclick="cselAdd('${containerId}')">+</button>
+      </div>` : ''}
+    </div>`;
+  wrap._cselState = { opciones: [...opciones], seleccionada, noBorrar, onChange, onDelete, onAdd, placeholder, open: false };
   cselRefresh(containerId);
+}
+
+function cselToggle(containerId) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap?._cselState) return;
+  wrap._cselState.open = !wrap._cselState.open;
+  document.getElementById(containerId + '-drop').style.display = wrap._cselState.open ? 'block' : 'none';
+  document.getElementById(containerId + '-arrow').style.transform = wrap._cselState.open ? 'rotate(180deg)' : '';
 }
 
 function cselRefresh(containerId) {
   const wrap = document.getElementById(containerId);
-  if (!wrap || !wrap._cselState) return;
-  const { opciones, seleccionada, noBorrar, onChange, onDelete } = wrap._cselState;
+  if (!wrap?._cselState) return;
+  const { opciones, seleccionada, noBorrar, onDelete } = wrap._cselState;
+  const tlabel = document.getElementById(containerId + '-tlabel');
+  if (tlabel) tlabel.textContent = seleccionada || '—';
   const lista = document.getElementById(containerId + '-lista');
   if (!lista) return;
   lista.innerHTML = opciones.map(op => {
     const sel = seleccionada === op;
     const puedeEliminar = onDelete && op !== noBorrar;
-    return `<div class="csel-item${sel?' selected':''}" onclick="cselSelect('${containerId}','${op.replace(/'/g,"\\'")}')">
+    return `<div class="csel-item${sel ? ' selected' : ''}" onclick="cselSelect('${containerId}','${op.replace(/'/g, "\\'")}')">
       <div class="csel-radio"></div>
       <div class="csel-label">${op}</div>
-      ${puedeEliminar ? `<button class="csel-del" onclick="event.stopPropagation();cselDelete('${containerId}','${op.replace(/'/g,"\\'")}')">✕</button>` : ''}
+      ${puedeEliminar ? `<button class="csel-del" onclick="event.stopPropagation();cselDelete('${containerId}','${op.replace(/'/g, "\\'")}')">✕</button>` : ''}
     </div>`;
   }).join('');
 }
 
 function cselSelect(containerId, val) {
   const wrap = document.getElementById(containerId);
-  if (!wrap || !wrap._cselState) return;
+  if (!wrap?._cselState) return;
   wrap._cselState.seleccionada = val;
+  wrap._cselState.open = false;
+  document.getElementById(containerId + '-drop').style.display = 'none';
+  document.getElementById(containerId + '-arrow').style.transform = '';
   cselRefresh(containerId);
   if (wrap._cselState.onChange) wrap._cselState.onChange(val);
 }
 
 function cselDelete(containerId, val) {
   const wrap = document.getElementById(containerId);
-  if (!wrap || !wrap._cselState) return;
+  if (!wrap?._cselState) return;
   const s = wrap._cselState;
   s.opciones = s.opciones.filter(o => o !== val);
   if (s.seleccionada === val) s.seleccionada = s.opciones[0] || '';
@@ -648,7 +653,7 @@ function cselDelete(containerId, val) {
 
 function cselAdd(containerId) {
   const wrap = document.getElementById(containerId);
-  if (!wrap || !wrap._cselState) return;
+  if (!wrap?._cselState) return;
   const inp = document.getElementById(containerId + '-inp');
   if (!inp) return;
   const val = inp.value.trim();
@@ -663,13 +668,12 @@ function cselAdd(containerId) {
 }
 
 function cselGetValue(containerId) {
-  const wrap = document.getElementById(containerId);
-  return wrap?._cselState?.seleccionada ?? '';
+  return document.getElementById(containerId)?._cselState?.seleccionada ?? '';
 }
 
 function cselSetValue(containerId, val) {
   const wrap = document.getElementById(containerId);
-  if (!wrap || !wrap._cselState) return;
+  if (!wrap?._cselState) return;
   wrap._cselState.seleccionada = val;
   cselRefresh(containerId);
 }
