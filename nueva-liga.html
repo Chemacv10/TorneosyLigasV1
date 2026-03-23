@@ -123,9 +123,29 @@
           <input class="finp" id="f1-cuota" type="number" placeholder="0" step="0.50">
         </div>
         <div class="fgrp">
-          <div class="flbl">URL pública</div>
-          <input class="finp" id="f1-url" placeholder="liga-masc-2526" oninput="sanitizarUrl(this)">
+          <div class="flbl">Duración partido (min)</div>
+          <input class="finp" id="f1-duracion" type="number" value="90" min="30" max="240">
         </div>
+      </div>
+
+      <div class="fgrp">
+        <div class="flbl">Ida y vuelta</div>
+        <div style="display:flex;gap:8px">
+          <button type="button" id="btn-ida-no"  onclick="setIdaVuelta(false)"
+            style="flex:1;padding:9px;border-radius:12px;border:1.5px solid var(--azul);background:#eff6ff;font-family:Nunito,sans-serif;font-size:13px;font-weight:800;cursor:pointer;color:var(--azul)">
+            Solo ida
+          </button>
+          <button type="button" id="btn-ida-si" onclick="setIdaVuelta(true)"
+            style="flex:1;padding:9px;border-radius:12px;border:1.5px solid var(--borde);background:#fff;font-family:Nunito,sans-serif;font-size:13px;font-weight:800;cursor:pointer;color:var(--sutil)">
+            Ida y vuelta
+          </button>
+        </div>
+        <input type="hidden" id="f1-ida-vuelta" value="false">
+      </div>
+
+      <div class="fgrp">
+        <div class="flbl">URL pública</div>
+        <input class="finp" id="f1-url" placeholder="liga-masc-2526" oninput="sanitizarUrl(this)">
       </div>
 
       <div class="sheet-btns" style="margin-top:16px">
@@ -275,6 +295,12 @@ function validarFase(n) {
 function onCambioFormato() {
   const fmt = document.getElementById('f1-formato').value;
   document.getElementById('wrap-puntuacion').style.display = fmt === 'americano' ? 'none' : 'block';
+}
+
+function setIdaVuelta(val) {
+  document.getElementById('f1-ida-vuelta').value = val;
+  document.getElementById('btn-ida-no').style.cssText  += val ? ';background:#fff;border-color:var(--borde);color:var(--sutil)' : ';background:#eff6ff;border-color:var(--azul);color:var(--azul)';
+  document.getElementById('btn-ida-si').style.cssText  += val ? ';background:#eff6ff;border-color:var(--azul);color:var(--azul)' : ';background:#fff;border-color:var(--borde);color:var(--sutil)';
 }
 
 function sanitizarUrl(inp) {
@@ -436,6 +462,8 @@ async function crearLiga() {
       temporada:  document.getElementById('f1-temporada').value.trim() || null,
       formato:    cselGetValue('f1-formato-csel') === 'Americano' ? 'americano' : 'round_robin',
       sets_partido: cselGetValue('f1-sets-csel'),
+      ida_vuelta: document.getElementById('f1-ida-vuelta').value === 'true',
+      duracion_partido: parseInt(document.getElementById('f1-duracion').value) || 90,
       pts_victoria:    parseInt(document.getElementById('f1-pts-v').value)    || 2,
       pts_derrota:     parseInt(document.getElementById('f1-pts-d').value)    || 1,
       pts_wo:          parseInt(document.getElementById('f1-pts-wo').value)   || 0,
