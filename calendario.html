@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Calendario — LigaPádel</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Wizard */
+    .wizard-steps { display:flex; margin-bottom:18px; }
+    .wstep { flex:1; text-align:center; position:relative; }
+    .wstep-circle { width:28px; height:28px; border-radius:50%; border:2px solid #e2e8f0; background:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; color:#94a3b8; margin:0 auto 4px; transition:all .2s; }
+    .wstep.active .wstep-circle { border-color:var(--azul); background:var(--azul); color:#fff; }
+    .wstep.done   .wstep-circle { border-color:var(--verde); background:var(--verde); color:#fff; }
+    .wstep-label { font-size:9px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.4px; }
+    .wstep.active .wstep-label { color:var(--azul); }
+    .wstep.done   .wstep-label { color:var(--verde); }
+    .wstep::after { content:''; position:absolute; top:13px; left:calc(50% + 18px); right:calc(-50% + 18px); height:2px; background:#e2e8f0; }
+    .wstep:last-child::after { display:none; }
+    .wstep.done::after { background:var(--verde); }
+    .fase { display:none; }
+    .fase.active { display:block; }
+
+    /* Slots */
+    .slot-card { background:var(--card); border-radius:14px; border:1.5px solid var(--borde); padding:12px 14px; margin-bottom:8px; box-shadow:var(--sombra); }
+    .slot-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .slot-dia { font-size:13px; font-weight:900; color:var(--azul); }
+    .slot-del { background:none; border:none; color:var(--sutil); font-size:18px; cursor:pointer; padding:2px 6px; border-radius:8px; }
+    .slot-del:hover { background:#fee2e2; color:var(--rojo); }
+    .slot-fields { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+    .slot-field label { font-size:10px; font-weight:800; color:var(--sutil); text-transform:uppercase; letter-spacing:.4px; display:block; margin-bottom:4px; }
+    .slot-field input { width:100%; padding:8px 10px; border-radius:10px; border:1.5px solid var(--borde); font-family:Nunito,sans-serif; font-size:13px; font-weight:700; color:var(--texto); background:#fff; outline:none; }
+    .slot-field input:focus { border-color:var(--azul); }
+
+    .dia-btns { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:12px; }
+    .dia-btn { padding:6px 2px; border-radius:10px; border:1.5px solid var(--borde); background:#fff; font-family:Nunito,sans-serif; font-size:10px; font-weight:800; cursor:pointer; color:var(--sutil); text-align:center; }
+    .dia-btn.on { background:#eff6ff; border-color:var(--azul); color:var(--azul); }
+
+    /* Semanas */
+    .semana-item { display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px; border:1.5px solid var(--borde); margin-bottom:6px; background:var(--card); }
+    .semana-item.j { border-color:var(--azul); background:#eff6ff; }
+    .semana-item.r { border-color:var(--verde); background:#f0fdf4; }
+    .semana-item.l { opacity:.5; }
+    .semana-num { font-size:11px; font-weight:900; width:32px; text-align:center; flex-shrink:0; }
+    .semana-label { flex:1; font-size:12px; font-weight:700; color:var(--texto); }
+    .semana-btns { display:flex; gap:3px; }
+    .sbtn-tipo { padding:4px 7px; border-radius:8px; border:1px solid var(--borde); background:#fff; font-size:9px; font-weight:800; cursor:pointer; color:var(--sutil); font-family:Nunito,sans-serif; }
+    .sbtn-tipo.on-j { border-color:var(--azul); background:var(--azul); color:#fff; }
+    .sbtn-tipo.on-r { border-color:var(--verde); background:var(--verde); color:#fff; }
+    .sbtn-tipo.on-l { border-color:#94a3b8; background:#f1f5f9; color:#64748b; }
+
+    /* Contadores */
+    .cnt-row { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:14px; }
+    .cnt-box { background:var(--card); border-radius:12px; padding:10px 6px; text-align:center; border:1.5px solid var(--borde); }
+    .cnt-val { font-size:18px; font-weight:900; }
+    .cnt-lbl { font-size:9px; font-weight:700; color:var(--sutil); margin-top:2px; text-transform:uppercase; }
+    .cnt-ok  { border-color:#86efac; background:#f0fdf4; }
+    .cnt-warn { border-color:#fcd34d; background:#fef9c3; }
+    .cnt-err  { border-color:#fca5a5; background:#fee2e2; }
+
+    /* Generar */
+    .gen-division { background:var(--card); border-radius:14px; border:1.5px solid var(--borde); padding:12px 14px; margin-bottom:8px; }
+    .gen-div-nombre { font-size:13px; font-weight:900; color:var(--texto); margin-bottom:6px; }
+    .gen-div-info { font-size:11px; font-weight:600; color:var(--sutil); line-height:1.6; }
+    .gen-aviso { background:#fef9c3; border:1.5px solid #fcd34d; border-radius:12px; padding:12px; font-size:12px; font-weight:700; color:#92400e; margin-bottom:12px; }
+    .gen-ok    { background:#f0fdf4; border:1.5px solid #86efac; border-radius:12px; padding:12px; font-size:12px; font-weight:700; color:#15803d; margin-bottom:12px; }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div id="header-container"></div>
+  <nav id="nav-container"></nav>
+
+  <main class="content">
+    <div class="wizard-steps" id="wizard-steps">
+      <div class="wstep active" id="ws-1"><div class="wstep-circle">1</div><div class="wstep-label">Slots</div></div>
+      <div class="wstep"        id="ws-2"><div class="wstep-circle">2</div><div class="wstep-label">Semanas</div></div>
+      <div class="wstep"        id="ws-3"><div class="wstep-circle">3</div><div class="wstep-label">Generar</div></div>
+    </div>
+
+    <!-- ─── FASE 1: Slots ─── -->
+    <div class="fase active" id="fase-1">
+      <div style="font-size:12px;font-weight:600;color:var(--sutil);margin-bottom:14px;line-height:1.5">
+        Define los días y franjas horarias disponibles para jugar, y cuántas pistas hay en cada franja.
+      </div>
+      <div id="slots-lista"></div>
+      <button class="btn" style="width:100%;margin-bottom:16px" onclick="addSlot()">+ Añadir franja horaria</button>
+      <div class="sheet-btns">
+        <button class="sbtn" onclick="window.location.href='inscripciones.html?id='+_ligaId">← Volver</button>
+        <button class="sbtn prim" onclick="irFase(2)">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- ─── FASE 2: Semanas ─── -->
+    <div class="fase" id="fase-2">
+      <div class="cnt-row" id="cnt-row"></div>
+      <div id="semanas-lista"></div>
+      <div class="sheet-btns" style="margin-top:8px">
+        <button class="sbtn" onclick="irFase(1)">← Atrás</button>
+        <button class="sbtn prim" onclick="irFase(3)">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- ─── FASE 3: Generar ─── -->
+    <div class="fase" id="fase-3">
+      <div style="font-size:12px;font-weight:600;color:var(--sutil);margin-bottom:14px;line-height:1.5">
+        Revisa el resumen y genera el calendario completo para todas las divisiones.
+      </div>
+      <div id="resumen-divisiones"></div>
+      <div id="gen-aviso-wrap"></div>
+      <div class="sheet-btns" style="margin-top:8px">
+        <button class="sbtn" onclick="irFase(2)">← Atrás</button>
+        <button class="sbtn prim" id="btn-generar" onclick="generarCalendario()">⚡ Generar calendario</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/store-liga.js"></script>
+<script src="js/ui.js"></script>
+<script>
+
+const params  = new URLSearchParams(location.search);
+const _ligaId = params.get('id');
+
+let _liga       = null;
+let _divisiones = [];
+let _parejasPorDiv = {}; // { divId: [parejas] }
+let _jornadas   = []; // jornadas existentes de la liga
+let _slots      = []; // slots definidos por el usuario en esta sesión
+let _semanas    = []; // { ini, fin, label, tipo: 'jornada'|'recuperacion'|'libre' }
+
+const DIAS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+
+// ── Wizard ────────────────────────────────────────────────────
+function irFase(n) {
+  if (n > _faseActual && !validarFase(_faseActual)) return;
+  document.querySelector('.fase.active')?.classList.remove('active');
+  document.getElementById('fase-' + n).classList.add('active');
+  for (let i = 1; i <= 3; i++) {
+    const ws = document.getElementById('ws-' + i);
+    ws.className = 'wstep' + (i < n ? ' done' : i === n ? ' active' : '');
+  }
+  _faseActual = n;
+  window.scrollTo(0, 0);
+  if (n === 2) renderSemanas();
+  if (n === 3) renderResumen();
+}
+
+let _faseActual = 1;
+
+function validarFase(n) {
+  if (n === 1) {
+    if (!_slots.length) { toast('Añade al menos una franja horaria', 'warn'); return false; }
+    const invalido = _slots.find(s => !s.dia_semana || !s.hora_inicio || !s.hora_fin || s.num_pistas < 1);
+    if (invalido) { toast('Completa todos los campos de cada franja', 'warn'); return false; }
+  }
+  if (n === 2) {
+    const nJ = _semanas.filter(s => s.tipo === 'jornada').length;
+    if (!nJ) { toast('Marca al menos una semana como jornada', 'warn'); return false; }
+  }
+  return true;
+}
+
+// ── Fase 1: Slots ─────────────────────────────────────────────
+function addSlot() {
+  _slots.push({ dia_semana: 0, hora_inicio: '', hora_fin: '', num_pistas: 1 });
+  renderSlots();
+}
+
+function removeSlot(i) {
+  _slots.splice(i, 1);
+  renderSlots();
+}
+
+function renderSlots() {
+  const el = document.getElementById('slots-lista');
+  if (!_slots.length) {
+    el.innerHTML = `<div style="text-align:center;padding:24px;font-size:12px;color:var(--sutil);font-weight:700">
+      Sin franjas. Pulsa + para añadir.</div>`;
+    return;
+  }
+  el.innerHTML = _slots.map((s, i) => `
+    <div class="slot-card">
+      <div class="slot-header">
+        <div class="slot-dia">${s.dia_semana ? DIAS[s.dia_semana - 1] : 'Día'}</div>
+        <button class="slot-del" onclick="removeSlot(${i})">✕</button>
+      </div>
+      <div class="dia-btns">
+        ${DIAS.map((d, di) => `
+          <div class="dia-btn ${s.dia_semana === di+1 ? 'on' : ''}"
+            onclick="_slots[${i}].dia_semana=${di+1};renderSlots()">${d}</div>`).join('')}
+      </div>
+      <div class="slot-fields">
+        <div class="slot-field">
+          <label>Hora inicio</label>
+          <input type="time" value="${s.hora_inicio}"
+            onchange="_slots[${i}].hora_inicio=this.value;actualizarPartidosPosibles(${i})">
+        </div>
+        <div class="slot-field">
+          <label>Hora fin</label>
+          <input type="time" value="${s.hora_fin}"
+            onchange="_slots[${i}].hora_fin=this.value;actualizarPartidosPosibles(${i})">
+        </div>
+        <div class="slot-field">
+          <label>Pistas</label>
+          <input type="number" value="${s.num_pistas}" min="1" max="20"
+            onchange="_slots[${i}].num_pistas=+this.value">
+        </div>
+      </div>
+      <div id="slot-info-${i}" style="font-size:10px;font-weight:700;color:var(--sutil);margin-top:8px;text-align:right"></div>
+    </div>`).join('');
+
+  _slots.forEach((s, i) => actualizarPartidosPosibles(i));
+}
+
+function actualizarPartidosPosibles(i) {
+  const s = _slots[i];
+  const el = document.getElementById(`slot-info-${i}`);
+  if (!el || !s.hora_inicio || !s.hora_fin || !_liga) return;
+  const durMin = _liga.duracion_partido || 90;
+  const [hIni, mIni] = s.hora_inicio.split(':').map(Number);
+  const [hFin, mFin] = s.hora_fin.split(':').map(Number);
+  const totalMin = (hFin * 60 + mFin) - (hIni * 60 + mIni);
+  if (totalMin <= 0) { el.textContent = '⚠️ Hora fin debe ser mayor que inicio'; return; }
+  const turnos = Math.floor(totalMin / durMin);
+  const partidos = turnos * (s.num_pistas || 1);
+  el.textContent = `${turnos} turno${turnos !== 1 ? 's' : ''} × ${s.num_pistas} pista${s.num_pistas !== 1 ? 's' : ''} = ${partidos} partido${partidos !== 1 ? 's' : ''} por jornada`;
+}
+
+// ── Fase 2: Semanas ───────────────────────────────────────────
+function renderSemanas() {
+  actualizarContadores();
+  const el = document.getElementById('semanas-lista');
+  if (!_semanas.length) {
+    el.innerHTML = '<div style="text-align:center;padding:24px;font-size:12px;color:var(--sutil);font-weight:700">Sin semanas definidas en el período de la liga.</div>';
+    return;
+  }
+  let numJ = 0, numR = 0;
+  el.innerHTML = _semanas.map((s, i) => {
+    if (s.tipo === 'jornada')     numJ++;
+    if (s.tipo === 'recuperacion') numR++;
+    const numLabel = s.tipo === 'jornada'
+      ? `<span style="color:var(--azul)">J${numJ}</span>`
+      : s.tipo === 'recuperacion'
+        ? `<span style="color:var(--verde)">R${numR}</span>`
+        : `<span style="color:var(--sutil)">—</span>`;
+    return `<div class="semana-item ${s.tipo === 'jornada' ? 'j' : s.tipo === 'recuperacion' ? 'r' : 'l'}">
+      <div class="semana-num">${numLabel}</div>
+      <div class="semana-label">${s.label}</div>
+      <div class="semana-btns">
+        <button class="sbtn-tipo ${s.tipo==='jornada'?'on-j':''}" onclick="setSemana(${i},'jornada')">J</button>
+        <button class="sbtn-tipo ${s.tipo==='recuperacion'?'on-r':''}" onclick="setSemana(${i},'recuperacion')">R</button>
+        <button class="sbtn-tipo ${s.tipo==='libre'?'on-l':''}" onclick="setSemana(${i},'libre')">—</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setSemana(i, tipo) {
+  _semanas[i].tipo = tipo;
+  renderSemanas();
+}
+
+function actualizarContadores() {
+  const nJ = _semanas.filter(s => s.tipo === 'jornada').length;
+  const necesarias = calcularJornadasNecesarias();
+  const partidosPorJornada = calcularPartidosPorJornada();
+
+  let clsJ = nJ >= necesarias ? 'cnt-ok' : 'cnt-err';
+  document.getElementById('cnt-row').innerHTML = `
+    <div class="cnt-box ${clsJ}">
+      <div class="cnt-val" style="color:${nJ >= necesarias ? 'var(--verde)' : 'var(--rojo)'}">${nJ}</div>
+      <div class="cnt-lbl">Jornadas</div>
+    </div>
+    <div class="cnt-box">
+      <div class="cnt-val" style="color:var(--azul)">${necesarias}</div>
+      <div class="cnt-lbl">Necesarias</div>
+    </div>
+    <div class="cnt-box">
+      <div class="cnt-val" style="color:var(--sutil)">${partidosPorJornada}</div>
+      <div class="cnt-lbl">Part./jornada</div>
+    </div>
+    <div class="cnt-box">
+      <div class="cnt-val" style="color:var(--sutil)">${_semanas.filter(s=>s.tipo==='recuperacion').length}</div>
+      <div class="cnt-lbl">Recuper.</div>
+    </div>`;
+}
+
+function calcularJornadasNecesarias() {
+  // Max jornadas necesarias entre todas las divisiones
+  let max = 0;
+  for (const divId in _parejasPorDiv) {
+    const n = _parejasPorDiv[divId].length;
+    if (n < 2) continue;
+    const base = n % 2 === 0 ? n - 1 : n;
+    const factor = _liga?.ida_vuelta ? 2 : 1;
+    const jornadas = base * factor;
+    // Cuántas jornadas reales necesita con los partidos por jornada
+    const pj = calcularPartidosPorJornada();
+    const partidosDiv = Math.floor(n / 2) * (pj > 0 ? 1 : 1);
+    // Jornadas secuenciales necesarias (round-robin)
+    if (jornadas > max) max = jornadas;
+  }
+  return max;
+}
+
+function calcularPartidosPorJornada() {
+  if (!_slots.length || !_liga) return 0;
+  const durMin = _liga.duracion_partido || 90;
+  return _slots.reduce((total, s) => {
+    if (!s.hora_inicio || !s.hora_fin) return total;
+    const [hIni, mIni] = s.hora_inicio.split(':').map(Number);
+    const [hFin, mFin] = s.hora_fin.split(':').map(Number);
+    const totalMin = (hFin * 60 + mFin) - (hIni * 60 + mIni);
+    if (totalMin <= 0) return total;
+    const turnos = Math.floor(totalMin / durMin);
+    return total + turnos * (s.num_pistas || 1);
+  }, 0);
+}
+
+// ── Fase 3: Resumen ───────────────────────────────────────────
+function renderResumen() {
+  const nJ = _semanas.filter(s => s.tipo === 'jornada').length;
+  const necesarias = calcularJornadasNecesarias();
+  const pj = calcularPartidosPorJornada();
+
+  let html = '';
+  for (const div of _divisiones) {
+    const parejas = _parejasPorDiv[div.id] || [];
+    const n = parejas.length;
+    const factor = _liga?.ida_vuelta ? 2 : 1;
+    const jornadasDiv = n > 1 ? (n % 2 === 0 ? n - 1 : n) * factor : 0;
+    const totalPartidos = n > 1 ? Math.floor(n / 2) * jornadasDiv : 0;
+    html += `<div class="gen-division">
+      <div class="gen-div-nombre">${div.nombre}</div>
+      <div class="gen-div-info">
+        ${n} parejas · ${jornadasDiv} jornadas · ${totalPartidos} partidos en total<br>
+        ${_liga?.ida_vuelta ? 'Ida y vuelta' : 'Solo ida'}
+      </div>
+    </div>`;
+  }
+  document.getElementById('resumen-divisiones').innerHTML = html;
+
+  const avisoEl = document.getElementById('gen-aviso-wrap');
+  if (nJ < necesarias) {
+    avisoEl.innerHTML = `<div class="gen-aviso">⚠️ Tienes ${nJ} jornada${nJ!==1?'s':''} pero necesitas ${necesarias}. Vuelve atrás y añade más semanas.</div>`;
+    document.getElementById('btn-generar').disabled = true;
+    document.getElementById('btn-generar').style.opacity = '.4';
+  } else {
+    avisoEl.innerHTML = `<div class="gen-ok">✓ Todo listo. ${nJ} jornadas disponibles para ${necesarias} necesarias.</div>`;
+    document.getElementById('btn-generar').disabled = false;
+    document.getElementById('btn-generar').style.opacity = '1';
+  }
+}
+
+// ── Generar calendario ────────────────────────────────────────
+async function generarCalendario() {
+  const btn = document.getElementById('btn-generar');
+  btn.disabled = true;
+  btn.textContent = 'Generando…';
+
+  try {
+    // 1. Guardar slots en Supabase
+    await guardarSlots();
+
+    // 2. Actualizar jornadas existentes con tipos
+    await actualizarJornadas();
+
+    // 3. Generar partidos para cada división
+    const jornadasActivas = _semanas
+      .map((s, i) => ({ ...s, idx: i }))
+      .filter(s => s.tipo === 'jornada');
+
+    const todosPartidos = [];
+
+    for (const div of _divisiones) {
+      const parejas = _parejasPorDiv[div.id] || [];
+      if (parejas.length < 2) continue;
+
+      const rondas = lpGenerarRoundRobin(parejas.length);
+      const factor = _liga?.ida_vuelta ? 2 : 1;
+      const todasRondas = _liga?.ida_vuelta
+        ? [...rondas, ...rondas.map(r => r.map(([a, b]) => [b, a]))]
+        : rondas;
+
+      const jornada_ids = _jornadas.filter(j => j.tipo === 'jornada').map(j => j.id);
+
+      todasRondas.forEach((ronda, ri) => {
+        const jornadaId = jornada_ids[ri] || null;
+        ronda.forEach(([ia, ib]) => {
+          todosPartidos.push({
+            liga_id:      _ligaId,
+            division_id:  div.id,
+            jornada_id:   jornadaId,
+            pareja_a_id:  parejas[ia].id,
+            pareja_b_id:  parejas[ib].id,
+            estado:       'pendiente',
+          });
+        });
+      });
+    }
+
+    // Eliminar partidos anteriores si los hay y crear nuevos
+    await _sb.from('lp_partidos').delete().eq('liga_id', _ligaId);
+    if (todosPartidos.length) await lpSavePartidosLote(todosPartidos);
+
+    // 4. Cambiar estado liga a activa
+    await lpSaveLiga({ id: _ligaId, estado: 'activa' });
+
+    toast('✓ Calendario generado', 'ok');
+    setTimeout(() => window.location.href = `liga.html?id=${_ligaId}&tab=calendario`, 800);
+
+  } catch(e) {
+    console.error(e);
+    toast('Error: ' + (e.message || e), 'err');
+    btn.disabled = false;
+    btn.textContent = '⚡ Generar calendario';
+  }
+}
+
+async function guardarSlots() {
+  // Borrar slots anteriores y guardar los nuevos
+  await _sb.from('lp_slots').delete().eq('liga_id', _ligaId);
+  if (!_slots.length) return;
+  await _sb.from('lp_slots').insert(_slots.map(s => ({
+    liga_id:     _ligaId,
+    dia_semana:  s.dia_semana,
+    hora_inicio: s.hora_inicio,
+    hora_fin:    s.hora_fin,
+    num_pistas:  s.num_pistas,
+  })));
+}
+
+async function actualizarJornadas() {
+  // Actualizar tipo de cada jornada existente según la selección en semanas
+  const jornadas = _jornadas;
+  let idxJ = 0, idxR = 0;
+  for (const semana of _semanas) {
+    if (semana.tipo === 'libre') continue;
+    const jornada = jornadas[semana.tipo === 'jornada' ? idxJ++ : (idxJ + idxR++)];
+    // simplemente dejamos las jornadas como están — ya tienen fechas del wizard
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────
+async function init() {
+  if (!_ligaId) { window.location.href = 'index.html'; return; }
+
+  renderHeader({
+    titulo:       'Calendario',
+    subtitulo:    'Cargando…',
+    icono:        'icons/calendario.png',
+    botonDerecho: 'back',
+    onBack:       'index.html',
+  });
+  renderNav('ligas');
+
+  const ok = await lpInit();
+  if (!ok) return;
+
+  try {
+    [_liga, _divisiones] = await Promise.all([
+      lpGetLiga(_ligaId),
+      lpGetDivisiones(_ligaId),
+    ]);
+
+    // Cargar parejas por división
+    await Promise.all(_divisiones.map(async div => {
+      _parejasPorDiv[div.id] = await lpGetParejas(_ligaId, { division_id: div.id });
+    }));
+
+    // Cargar jornadas existentes
+    _jornadas = await lpGetJornadas(_ligaId);
+
+    // Construir _semanas desde jornadas
+    _semanas = _jornadas
+      .filter(j => j.fecha_ini)
+      .map(j => ({
+        ini:   new Date(j.fecha_ini + 'T00:00:00'),
+        fin:   new Date(j.fecha_fin + 'T00:00:00'),
+        label: `${lpFechaCorta(j.fecha_ini)} – ${lpFechaCorta(j.fecha_fin)}`,
+        tipo:  j.tipo || 'jornada',
+        id:    j.id,
+      }));
+
+    // Cargar slots existentes si los hay
+    const { data: slotsExist } = await _sb.from('lp_slots').select('*').eq('liga_id', _ligaId);
+    if (slotsExist?.length) {
+      _slots = slotsExist.map(s => ({
+        dia_semana:  s.dia_semana,
+        hora_inicio: s.hora_inicio?.slice(0, 5) || '',
+        hora_fin:    s.hora_fin?.slice(0, 5) || '',
+        num_pistas:  s.num_pistas,
+      }));
+    }
+
+    renderHeader({
+      titulo:       _liga.nombre,
+      subtitulo:    'Calendario',
+      icono:        'icons/calendario.png',
+      botonDerecho: 'back',
+      onBack:       'index.html',
+    });
+
+    renderSlots();
+
+  } catch(e) {
+    toast('Error cargando datos: ' + (e.message || e), 'err');
+  }
+}
+
+init();
+</script>
+</body>
+</html>
