@@ -95,18 +95,11 @@
       <div class="frow">
         <div class="fgrp">
           <div class="flbl">Formato</div>
-          <select class="fsel" id="f1-formato" onchange="onCambioFormato()">
-            <option value="round_robin">Round-Robin (parejas fijas)</option>
-            <option value="americano">Americano (parejas rotan)</option>
-          </select>
+          <div class="csel-wrap" id="f1-formato-csel"></div>
         </div>
         <div class="fgrp">
           <div class="flbl">Sets por partido</div>
-          <select class="fsel" id="f1-sets">
-            <option value="mejor_3_stb">Mejor de 3 + STB</option>
-            <option value="mejor_3">Mejor de 3</option>
-            <option value="pro_set_10">Pro-set 10 games</option>
-          </select>
+          <div class="csel-wrap" id="f1-sets-csel"></div>
         </div>
       </div>
 
@@ -441,8 +434,8 @@ async function crearLiga() {
       categoria:  cselGetValue('f1-categoria-csel'),
       categoria_edad: cselGetValue('f1-edad-csel'),
       temporada:  document.getElementById('f1-temporada').value.trim() || null,
-      formato:    document.getElementById('f1-formato').value,
-      sets_partido: document.getElementById('f1-sets').value,
+      formato:    cselGetValue('f1-formato-csel') === 'Americano' ? 'americano' : 'round_robin',
+      sets_partido: cselGetValue('f1-sets-csel'),
       pts_victoria:    parseInt(document.getElementById('f1-pts-v').value)    || 2,
       pts_derrota:     parseInt(document.getElementById('f1-pts-d').value)    || 1,
       pts_wo:          parseInt(document.getElementById('f1-pts-wo').value)   || 0,
@@ -523,10 +516,13 @@ async function init() {
   const ok = await lpInit(); if (!ok) return;
 
   // Inicializar csel de categoría y edad
-  cselRender('f1-categoria-csel', ['Masculina','Femenina','Mixta'], 'Masculina', null,
-    null, null, null, null);
+  cselRender('f1-categoria-csel', ['Masculina','Femenina','Mixta'], 'Masculina', null, null, null, null, null);
   cselRender('f1-edad-csel', ['Absoluto','Benjamín','Alevín','Infantil','Cadete','Juvenil','Veteranos +35','Veteranos +45','Veteranos +55'],
     'Absoluto', null, null, null, null, null);
+  cselRender('f1-formato-csel', ['Round-Robin','Americano'], 'Round-Robin', null,
+    (val) => { document.getElementById('wrap-puntuacion').style.display = val === 'Americano' ? 'none' : 'block'; },
+    null, null, null);
+  cselRender('f1-sets-csel', ['Mejor de 3 + STB','Mejor de 3','Pro-set 10 games'], 'Mejor de 3 + STB', null, null, null, null, null);
 
   // Fecha sugerida: hoy + 1 semana a hoy + 7 meses
   const hoy = new Date();
