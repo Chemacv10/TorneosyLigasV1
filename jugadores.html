@@ -105,11 +105,7 @@
       <div class="frow">
         <div class="fgrp">
           <div class="flbl">Sexo</div>
-          <select class="fsel" id="jug-sexo-csel" onchange="document.getElementById('jug-sexo').value=this.value">
-            <option value="">— Sin especificar —</option>
-            <option value="M">Masculino</option>
-            <option value="F">Femenino</option>
-          </select>
+          <div class="csel-wrap" id="jug-sexo-csel"></div>
           <input type="hidden" id="jug-sexo">
         </div>
         <div class="fgrp">
@@ -261,8 +257,10 @@ function abrirNuevo() {
   document.getElementById('jug-anyo').value     = '';
   document.getElementById('jug-email').value    = '';
   document.getElementById('jug-notas').value    = '';
-  document.getElementById('jug-sexo').value     = '';
-  document.getElementById('jug-sexo-csel').value = '';
+  document.getElementById('jug-sexo').value = '';
+  cselRender('jug-sexo-csel', ['Sin especificar','Masculino','Femenino'], 'Sin especificar', null,
+    (val) => { document.getElementById('jug-sexo').value = val === 'Masculino' ? 'M' : val === 'Femenino' ? 'F' : ''; },
+    null, null, null);
   document.getElementById('jug-nivel-display').textContent = '—';
   openSheet('sh-jugador');
 }
@@ -278,8 +276,11 @@ function abrirEditar(id) {
   document.getElementById('jug-anyo').value          = j.año_nacimiento || '';
   document.getElementById('jug-email').value         = j.email || '';
   document.getElementById('jug-notas').value         = j.notas || '';
-  document.getElementById('jug-sexo').value      = j.sexo || '';
-  document.getElementById('jug-sexo-csel').value  = j.sexo || '';
+  const sexoLabel = j.sexo === 'M' ? 'Masculino' : j.sexo === 'F' ? 'Femenino' : 'Sin especificar';
+  document.getElementById('jug-sexo').value = j.sexo || '';
+  cselRender('jug-sexo-csel', ['Sin especificar','Masculino','Femenino'], sexoLabel, null,
+    (val) => { document.getElementById('jug-sexo').value = val === 'Masculino' ? 'M' : val === 'Femenino' ? 'F' : ''; },
+    null, null, null);
   document.getElementById('jug-nivel-display').textContent =
     j.nivel != null ? `⭐ ${parseFloat(j.nivel).toFixed(1)}` : '—';
   openSheet('sh-jugador');
